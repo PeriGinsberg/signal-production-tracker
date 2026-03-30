@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,6 +41,10 @@
     --orange: #fb923c;
     --orange-bg: rgba(251,146,60,0.08);
     --orange-border: rgba(251,146,60,0.25);
+
+    --teal: #2dd4bf;
+    --teal-bg: rgba(45,212,191,0.08);
+    --teal-border: rgba(45,212,191,0.25);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -53,7 +58,6 @@
     min-height: 100vh;
   }
 
-  /* ── HEADER ── */
   header {
     border-bottom: 1px solid var(--border);
     padding: 16px 24px;
@@ -85,14 +89,12 @@
     letter-spacing: 0.5px;
   }
 
-  /* ── LAYOUT ── */
   .shell {
     display: grid;
     grid-template-columns: 220px 1fr;
     min-height: calc(100vh - 53px);
   }
 
-  /* ── SIDEBAR ── */
   aside {
     border-right: 1px solid var(--border);
     padding: 20px 16px;
@@ -146,6 +148,10 @@
   .stat-box.p3 .num { color: var(--blue); }
   .stat-box.total .num { color: var(--text); }
 
+  /* Status stat boxes */
+  .stat-box.s-ready .num { color: var(--amber); }
+  .stat-box.s-verified .num { color: var(--green); }
+
   .filter-list { display: flex; flex-direction: column; gap: 3px; }
 
   .filter-btn {
@@ -191,7 +197,6 @@
   }
   .add-btn:hover { background: rgba(251,191,36,0.15); }
 
-  /* ── MAIN ── */
   main {
     padding: 24px;
     display: flex;
@@ -231,7 +236,6 @@
     font-family: 'IBM Plex Sans', sans-serif;
   }
 
-  /* ── ISSUE CARD ── */
   .issue-card {
     background: var(--bg2);
     border: 1px solid var(--border);
@@ -297,12 +301,10 @@
     text-transform: uppercase;
   }
 
-  /* Severity badges */
   .badge-p1 { background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); }
   .badge-p2 { background: var(--amber-bg); border: 1px solid var(--amber-border); color: var(--amber); }
   .badge-p3 { background: var(--blue-bg); border: 1px solid var(--blue-border); color: var(--blue); }
 
-  /* Category badges */
   .badge-scoring { background: var(--purple-bg); border: 1px solid var(--purple-border); color: var(--purple); }
   .badge-extraction { background: var(--orange-bg); border: 1px solid var(--orange-border); color: var(--orange); }
   .badge-bullets { background: var(--green-bg); border: 1px solid var(--green-border); color: var(--green); }
@@ -311,7 +313,14 @@
   .badge-false_negative { background: var(--amber-bg); border: 1px solid var(--amber-border); color: var(--amber); }
   .badge-ui { background: var(--blue-bg); border: 1px solid var(--blue-border); color: var(--blue); }
 
-  /* Score badge */
+  /* ── STATUS BADGES ── */
+  .badge-status-open      { background: var(--bg3); border: 1px solid var(--border2); color: var(--muted); }
+  .badge-status-indev     { background: var(--blue-bg); border: 1px solid var(--blue-border); color: var(--blue); }
+  .badge-status-ready_to_test { background: var(--amber-bg); border: 1px solid var(--amber-border); color: var(--amber); }
+  .badge-status-failed_retest { background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); }
+  .badge-status-verified  { background: var(--green-bg); border: 1px solid var(--green-border); color: var(--green); }
+  .badge-status-closed    { background: var(--bg3); border: 1px solid var(--border); color: var(--dim); }
+
   .score-badge {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 10px;
@@ -322,7 +331,65 @@
     padding: 2px 6px;
   }
 
-  /* ── EXPANDED DETAIL ── */
+  /* ── STATUS DROPDOWN in card ── */
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .status-row label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--dim);
+    flex-shrink: 0;
+  }
+  .status-select {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 5px 8px;
+    cursor: pointer;
+    flex: 1;
+  }
+  .status-select:focus { outline: none; border-color: var(--amber-border); }
+
+  .notes-input {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 11px;
+    padding: 5px 8px;
+    flex: 2;
+    outline: none;
+  }
+  .notes-input:focus { border-color: var(--amber-border); }
+  .notes-input::placeholder { color: var(--dim); }
+
+  .save-status-btn {
+    padding: 5px 12px;
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-border);
+    border-radius: 5px;
+    color: var(--amber);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .save-status-btn:hover { background: rgba(251,191,36,0.15); }
+
   .issue-detail {
     border-top: 1px solid var(--border);
     padding: 14px 16px;
@@ -348,12 +415,8 @@
   .detail-value { color: var(--muted); line-height: 1.5; }
   .detail-value.root { color: var(--amber); font-style: italic; }
 
-  .detail-divider {
-    height: 1px;
-    background: var(--border);
-  }
+  .detail-divider { height: 1px; background: var(--border); }
 
-  /* ── MODAL ── */
   .modal-overlay {
     position: fixed;
     inset: 0;
@@ -443,7 +506,6 @@
   }
   .btn-save:hover { background: rgba(251,191,36,0.15); }
 
-  /* ── EMPTY STATE ── */
   .empty {
     text-align: center;
     padding: 60px 20px;
@@ -454,7 +516,6 @@
     line-height: 2;
   }
 
-  /* ── TRIAGE VIEW ── */
   .triage-section {
     background: var(--bg2);
     border: 1px solid var(--border);
@@ -479,7 +540,6 @@
   }
   .triage-body { padding: 12px 16px; font-size: 12px; color: var(--muted); line-height: 1.8; }
 
-  /* export btn */
   .export-btn {
     padding: 7px 14px;
     background: var(--bg3);
@@ -493,11 +553,9 @@
   }
   .export-btn:hover { color: var(--text); }
 
-  /* resolved */
   .issue-card.resolved { opacity: 0.45; }
   .badge-resolved { background: var(--bg3); border: 1px solid var(--border); color: var(--dim); }
 
-  /* view toggle */
   .view-toggle { display: flex; gap: 4px; }
   .view-btn {
     padding: 5px 10px;
@@ -531,13 +589,27 @@
         <div class="stat-box p1"><div class="num" id="stat-p1">0</div><div class="label">P1 Wrong</div></div>
         <div class="stat-box p2"><div class="num" id="stat-p2">0</div><div class="label">P2 Output</div></div>
         <div class="stat-box p3"><div class="num" id="stat-p3">0</div><div class="label">P3 Minor</div></div>
+        <div class="stat-box s-ready"><div class="num" id="stat-ready">0</div><div class="label">To Test</div></div>
+        <div class="stat-box s-verified"><div class="num" id="stat-verified">0</div><div class="label">Verified</div></div>
       </div>
     </div>
 
     <div>
-      <div class="sidebar-section-label">Filter</div>
+      <div class="sidebar-section-label">Filter by Status</div>
       <div class="filter-list">
         <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">All issues <span class="count" id="fc-all">0</span></button>
+        <button class="filter-btn" data-filter="status:open" onclick="setFilter('status:open',this)">Open <span class="count" id="fc-open">0</span></button>
+        <button class="filter-btn" data-filter="status:indev" onclick="setFilter('status:indev',this)">In dev <span class="count" id="fc-indev">0</span></button>
+        <button class="filter-btn" data-filter="status:ready_to_test" onclick="setFilter('status:ready_to_test',this)">Ready to test <span class="count" id="fc-ready_to_test">0</span></button>
+        <button class="filter-btn" data-filter="status:failed_retest" onclick="setFilter('status:failed_retest',this)">Failed retest <span class="count" id="fc-failed_retest">0</span></button>
+        <button class="filter-btn" data-filter="status:verified" onclick="setFilter('status:verified',this)">Verified <span class="count" id="fc-verified">0</span></button>
+        <button class="filter-btn" data-filter="status:closed" onclick="setFilter('status:closed',this)">Closed <span class="count" id="fc-closed">0</span></button>
+      </div>
+    </div>
+
+    <div>
+      <div class="sidebar-section-label">Filter by Type</div>
+      <div class="filter-list">
         <button class="filter-btn" data-filter="P1" onclick="setFilter('P1',this)">P1 — Wrong decision <span class="count" id="fc-P1">0</span></button>
         <button class="filter-btn" data-filter="P2" onclick="setFilter('P2',this)">P2 — Misleading <span class="count" id="fc-P2">0</span></button>
         <button class="filter-btn" data-filter="P3" onclick="setFilter('P3',this)">P3 — Minor <span class="count" id="fc-P3">0</span></button>
@@ -570,6 +642,7 @@
             <option value="newest">Newest first</option>
             <option value="severity">Severity</option>
             <option value="category">Category</option>
+            <option value="status">Status</option>
           </select>
         </div>
       </div>
@@ -636,10 +709,18 @@
 </div>
 
 <script>
-// ── Supabase config ──
 const SUPABASE_URL = "https://ejhnokcnahauvrcbcmic.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqaG5va2NuYWhhdXZyY2JjbWljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxMzczNzMsImV4cCI6MjA4MzcxMzM3M30.LzTMZDzDrx4UMWGu9y5qeg4AzwxukEWUu06q7Ts9Wb0";
 const TABLE = "signal_issues";
+
+const STATUS_LABELS = {
+  open:           'Open',
+  indev:          'In dev',
+  ready_to_test:  'Ready to test',
+  failed_retest:  'Failed retest',
+  verified:       'Verified',
+  closed:         'Closed',
+};
 
 async function sbFetch(path, opts = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -660,39 +741,37 @@ async function sbFetch(path, opts = {}) {
   return text ? JSON.parse(text) : null;
 }
 
-// ── State ──
 let issues = [];
 let currentFilter = 'all';
 let currentView = 'list';
 
-// ── Init ──
 document.getElementById('session-date').textContent =
   new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
 
 setStatus('loading');
 loadIssues();
-
-// Poll every 15s so both testers see each other's issues
 setInterval(loadIssues, 15000);
 
 async function loadIssues() {
   try {
     const data = await sbFetch(`${TABLE}?select=*&order=created_at.desc`);
     issues = (data || []).map(row => ({
-      id: row.id,
-      company: row.company || '?',
-      role: row.role || '?',
-      profile: row.profile || '?',
-      score: row.score || '?',
-      concern: row.concern || '',
-      root: row.root_cause || '',
-      profileJson: row.profile_json || '',
-      jobDesc: row.job_desc || '',
-      outputJson: row.output_json || '',
-      category: row.category || 'scoring',
-      severity: row.severity || 'P2',
-      time: new Date(row.created_at).toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'}),
-      resolved: row.resolved || false,
+      id:           row.id,
+      company:      row.company || '?',
+      role:         row.role || '?',
+      profile:      row.profile || '?',
+      score:        row.score || '?',
+      concern:      row.concern || '',
+      root:         row.root_cause || '',
+      profileJson:  row.profile_json || '',
+      jobDesc:      row.job_desc || '',
+      outputJson:   row.output_json || '',
+      category:     row.category || 'scoring',
+      severity:     row.severity || 'P2',
+      status:       row.status || 'open',
+      notes:        row.notes || '',
+      time:         new Date(row.created_at).toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'}),
+      resolved:     row.resolved || false,
       claudeAnalysis: row.claude_analysis || null,
     }));
     setStatus('live');
@@ -704,13 +783,12 @@ async function loadIssues() {
 
 function setStatus(state, msg) {
   const el = document.getElementById('conn-status');
-  if (state === 'loading') { el.textContent = '● CONNECTING...'; el.style.color = 'var(--muted)'; }
-  else if (state === 'live') { el.textContent = '● LIVE'; el.style.color = 'var(--green)'; }
-  else if (state === 'error') { el.textContent = '● ERROR'; el.style.color = 'var(--red)'; el.title = msg; }
-  else if (state === 'saving') { el.textContent = '● SAVING...'; el.style.color = 'var(--amber)'; }
+  if (state === 'loading')  { el.textContent = '● CONNECTING...'; el.style.color = 'var(--muted)'; }
+  else if (state === 'live')    { el.textContent = '● LIVE';  el.style.color = 'var(--green)'; }
+  else if (state === 'error')   { el.textContent = '● ERROR'; el.style.color = 'var(--red)'; el.title = msg; }
+  else if (state === 'saving')  { el.textContent = '● SAVING...'; el.style.color = 'var(--amber)'; }
 }
 
-// ── Render ──
 function render() {
   updateStats();
   if (currentView === 'list') renderList();
@@ -719,16 +797,22 @@ function render() {
 
 function getFiltered() {
   let list = [...issues];
-  if (currentFilter !== 'all') {
-    list = list.filter(i =>
-      i.severity === currentFilter ||
-      i.category === currentFilter
-    );
+  if (currentFilter === 'all') {
+    // show all
+  } else if (currentFilter.startsWith('status:')) {
+    const s = currentFilter.replace('status:', '');
+    list = list.filter(i => (i.status || 'open') === s);
+  } else {
+    list = list.filter(i => i.severity === currentFilter || i.category === currentFilter);
   }
   const sort = document.getElementById('sort-select').value;
-  if (sort === 'newest') list.sort((a,b) => b.id - a.id);
+  if (sort === 'newest')   list.sort((a,b) => b.id - a.id);
   else if (sort === 'severity') list.sort((a,b) => a.severity.localeCompare(b.severity));
   else if (sort === 'category') list.sort((a,b) => a.category.localeCompare(b.category));
+  else if (sort === 'status')   {
+    const order = ['open','indev','ready_to_test','failed_retest','verified','closed'];
+    list.sort((a,b) => order.indexOf(a.status||'open') - order.indexOf(b.status||'open'));
+  }
   return list;
 }
 
@@ -736,7 +820,7 @@ function renderList() {
   const el = document.getElementById('issue-list');
   const list = getFiltered();
   if (!list.length) {
-    el.innerHTML = '<div class="empty">NO ISSUES LOGGED YET<br>Click + LOG ISSUE to add one</div>';
+    el.innerHTML = '<div class="empty">NO ISSUES MATCH THIS FILTER</div>';
     return;
   }
   el.innerHTML = list.map(issue => issueCard(issue)).join('');
@@ -745,6 +829,14 @@ function renderList() {
 function issueCard(issue) {
   const catClass = `badge-${issue.category}`;
   const sevClass = `badge-${issue.severity.toLowerCase()}`;
+  const status = issue.status || 'open';
+  const statusClass = `badge-status-${status}`;
+  const statusLabel = STATUS_LABELS[status] || status;
+
+  const statusOptions = Object.entries(STATUS_LABELS).map(([val, label]) =>
+    `<option value="${val}" ${status === val ? 'selected' : ''}>${label}</option>`
+  ).join('');
+
   return `
     <div class="issue-card ${issue.resolved ? 'resolved' : ''}" id="card-${issue.id}">
       <div class="issue-card-header" onclick="toggleDetail(${issue.id})">
@@ -756,10 +848,22 @@ function issueCard(issue) {
         <div class="issue-badges">
           <span class="badge ${sevClass}">${issue.severity}</span>
           <span class="badge ${catClass}">${issue.category}</span>
+          <span class="badge ${statusClass}">${statusLabel}</span>
           ${issue.score ? `<span class="score-badge">${esc(issue.score)}</span>` : ''}
           ${issue.claudeAnalysis ? `<span class="badge" style="background:var(--green-bg);border:1px solid var(--green-border);color:var(--green)">ANALYZED</span>` : ''}
         </div>
       </div>
+
+      <!-- Status bar — always visible, no click propagation -->
+      <div class="status-row" onclick="event.stopPropagation()">
+        <label>Status</label>
+        <select class="status-select" id="sel-${issue.id}" onchange="updateStatusLocal(${issue.id}, this.value)">
+          ${statusOptions}
+        </select>
+        <input class="notes-input" id="notes-${issue.id}" placeholder="Add note…" value="${esc(issue.notes)}" />
+        <button class="save-status-btn" onclick="saveStatus(${issue.id})">SAVE</button>
+      </div>
+
       <div class="issue-detail" id="detail-${issue.id}">
         <div class="detail-row"><div class="detail-label">Profile</div><div class="detail-value">${esc(issue.profile)}</div></div>
         <div class="detail-row"><div class="detail-label">Score/Decision</div><div class="detail-value">${esc(issue.score)}</div></div>
@@ -782,21 +886,64 @@ function issueCard(issue) {
     </div>`;
 }
 
+// Update badge live when dropdown changes (before saving)
+function updateStatusLocal(id, newStatus) {
+  const issue = issues.find(i => i.id === id);
+  if (issue) issue.status = newStatus;
+  // update the badge in header without full re-render
+  const card = document.getElementById(`card-${id}`);
+  if (!card) return;
+  const badges = card.querySelectorAll('.issue-badges .badge');
+  badges.forEach(b => {
+    if (b.className.includes('badge-status-')) {
+      b.className = `badge badge-status-${newStatus}`;
+      b.textContent = STATUS_LABELS[newStatus] || newStatus;
+    }
+  });
+}
+
+async function saveStatus(id) {
+  const sel   = document.getElementById(`sel-${id}`);
+  const notes = document.getElementById(`notes-${id}`);
+  if (!sel) return;
+
+  const newStatus = sel.value;
+  const newNotes  = notes ? notes.value.trim() : '';
+
+  const btn = sel.closest('.status-row').querySelector('.save-status-btn');
+  const orig = btn.textContent;
+  btn.textContent = '...';
+
+  setStatus('saving');
+  try {
+    await sbFetch(`${TABLE}?id=eq.${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: newStatus, notes: newNotes }),
+    });
+    // update local state
+    const issue = issues.find(i => i.id === id);
+    if (issue) { issue.status = newStatus; issue.notes = newNotes; }
+    btn.textContent = 'SAVED!';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+    setStatus('live');
+    updateStats();
+  } catch(e) {
+    alert('Failed to save: ' + e.message);
+    setStatus('error', e.message);
+    btn.textContent = orig;
+  }
+}
+
 function renderTriage() {
   const el = document.getElementById('triage-view');
-  if (!issues.length) {
-    el.innerHTML = '<div class="empty">NO ISSUES TO TRIAGE YET</div>';
-    return;
-  }
+  if (!issues.length) { el.innerHTML = '<div class="empty">NO ISSUES TO TRIAGE YET</div>'; return; }
 
-  // Group by category
   const byCategory = {};
-  issues.filter(i => !i.resolved).forEach(i => {
+  issues.filter(i => !i.resolved && (i.status||'open') !== 'closed').forEach(i => {
     if (!byCategory[i.category]) byCategory[i.category] = [];
     byCategory[i.category].push(i);
   });
 
-  // Priority order
   const catOrder = ['scoring','extraction','risk_flags','false_positive','false_negative','bullets','ui'];
   const catColors = {
     scoring: 'var(--purple)', extraction: 'var(--orange)', bullets: 'var(--green)',
@@ -818,9 +965,9 @@ function renderTriage() {
           <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-left:auto">${items.length} issue${items.length!==1?'s':''}</span>
         </div>
         <div class="triage-body">
-          ${p1.length ? `<strong style="color:var(--red)">P1:</strong> ${p1.map(i => `<span title="${esc(i.concern)}">ISSUE-${String(i.id).padStart(3,'0')} ${esc(i.company)}/${esc(i.role)}</span>`).join(' · ')}<br>` : ''}
-          ${p2.length ? `<strong style="color:var(--amber)">P2:</strong> ${p2.map(i => `<span title="${esc(i.concern)}">ISSUE-${String(i.id).padStart(3,'0')} ${esc(i.company)}/${esc(i.role)}</span>`).join(' · ')}<br>` : ''}
-          ${p3.length ? `<strong style="color:var(--blue)">P3:</strong> ${p3.map(i => `<span title="${esc(i.concern)}">ISSUE-${String(i.id).padStart(3,'0')} ${esc(i.company)}/${esc(i.role)}</span>`).join(' · ')}<br>` : ''}
+          ${p1.length ? `<strong style="color:var(--red)">P1:</strong> ${p1.map(i => `<span title="${esc(i.concern)}">ISSUE-${String(i.id).padStart(3,'0')} [${(STATUS_LABELS[i.status||'open']||'Open')}]</span>`).join(' · ')}<br>` : ''}
+          ${p2.length ? `<strong style="color:var(--amber)">P2:</strong> ${p2.map(i => `<span title="${esc(i.concern)}">ISSUE-${String(i.id).padStart(3,'0')} [${(STATUS_LABELS[i.status||'open']||'Open')}]</span>`).join(' · ')}<br>` : ''}
+          ${p3.length ? `<strong style="color:var(--blue)">P3:</strong> ${p3.map(i => `<span title="${esc(i.concern)}">ISSUE-${String(i.id).padStart(3,'0')} [${(STATUS_LABELS[i.status||'open']||'Open')}]</span>`).join(' · ')}<br>` : ''}
         </div>
       </div>`;
   });
@@ -830,12 +977,13 @@ function renderTriage() {
 
 function updateStats() {
   const open = issues.filter(i => !i.resolved);
-  document.getElementById('stat-total').textContent = open.length;
-  document.getElementById('stat-p1').textContent = open.filter(i => i.severity==='P1').length;
-  document.getElementById('stat-p2').textContent = open.filter(i => i.severity==='P2').length;
-  document.getElementById('stat-p3').textContent = open.filter(i => i.severity==='P3').length;
+  document.getElementById('stat-total').textContent   = open.length;
+  document.getElementById('stat-p1').textContent      = open.filter(i => i.severity==='P1').length;
+  document.getElementById('stat-p2').textContent      = open.filter(i => i.severity==='P2').length;
+  document.getElementById('stat-p3').textContent      = open.filter(i => i.severity==='P3').length;
+  document.getElementById('stat-ready').textContent   = open.filter(i => (i.status||'open')==='ready_to_test').length;
+  document.getElementById('stat-verified').textContent= open.filter(i => (i.status||'open')==='verified').length;
 
-  // filter counts
   document.getElementById('fc-all').textContent = issues.length;
   ['P1','P2','P3'].forEach(s => {
     document.getElementById(`fc-${s}`).textContent = issues.filter(i=>i.severity===s).length;
@@ -843,9 +991,13 @@ function updateStats() {
   ['scoring','extraction','bullets','risk_flags','ui'].forEach(c => {
     document.getElementById(`fc-${c}`).textContent = issues.filter(i=>i.category===c).length;
   });
+  // status counts
+  ['open','indev','ready_to_test','failed_retest','verified','closed'].forEach(s => {
+    const el = document.getElementById(`fc-${s}`);
+    if (el) el.textContent = issues.filter(i=>(i.status||'open')===s).length;
+  });
 }
 
-// ── Interactions ──
 function toggleDetail(id) {
   const el = document.getElementById(`detail-${id}`);
   el.classList.toggle('open');
@@ -855,7 +1007,8 @@ function setFilter(f, btn) {
   currentFilter = f;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('view-label').textContent = f === 'all' ? 'ALL ISSUES' : f.toUpperCase();
+  const label = f === 'all' ? 'ALL ISSUES' : f.replace('status:','').toUpperCase().replace('_',' ');
+  document.getElementById('view-label').textContent = label;
   render();
 }
 
@@ -870,7 +1023,6 @@ function setView(v) {
   render();
 }
 
-// ── Modal ──
 function openModal() {
   document.getElementById('modal').classList.add('open');
   document.getElementById('f-concern').focus();
@@ -886,7 +1038,7 @@ function handleOverlayClick(e) {
 }
 
 async function saveIssue() {
-  const concern = document.getElementById('f-concern').value.trim();
+  const concern    = document.getElementById('f-concern').value.trim();
   const outputJson = document.getElementById('f-output-json').value.trim();
   if (!concern) { alert('Concern is required.'); return; }
 
@@ -894,7 +1046,7 @@ async function saveIssue() {
   try {
     const parsed = JSON.parse(outputJson);
     score = `${parsed.decision || '?'} / ${parsed.score || '?'}`;
-    const internLine = parsed.job_signals?.internship?.evidence?.internshipLine || '';
+    const internLine   = parsed.job_signals?.internship?.evidence?.internshipLine || '';
     const inPersonLine = parsed.job_signals?.internship?.evidence?.inPersonLine || '';
     const roleHint = internLine || inPersonLine;
     if (roleHint) role = roleHint.slice(0, 80);
@@ -912,9 +1064,11 @@ async function saveIssue() {
     profile_json: document.getElementById('f-profile-json').value.trim(),
     job_desc: jobDesc,
     output_json: outputJson,
-    category: document.getElementById('f-category').value,
-    severity: document.getElementById('f-severity').value,
-    resolved: false,
+    category:   document.getElementById('f-category').value,
+    severity:   document.getElementById('f-severity').value,
+    status:     'open',
+    notes:      '',
+    resolved:   false,
     root_cause: '',
     claude_analysis: null,
   };
@@ -952,7 +1106,6 @@ async function toggleResolved(id) {
   } catch(e) { alert('Failed to update: ' + e.message); setStatus('error', e.message); }
 }
 
-// persist is now a no-op (Supabase handles it)
 function persist() {}
 
 function copyForClaude(id) {
@@ -963,6 +1116,7 @@ function copyForClaude(id) {
     `Job: ${issue.company} — ${issue.role}`,
     `Profile: ${issue.profile}`,
     `Score/Decision: ${issue.score}`,
+    `Status: ${STATUS_LABELS[issue.status||'open']}`,
     `My concern: ${issue.concern}`,
     '',
     issue.profileJson ? `## PROFILE JSON\n${issue.profileJson}` : '',
@@ -973,11 +1127,9 @@ function copyForClaude(id) {
   ].filter(l => l !== undefined).join('\n');
 
   navigator.clipboard.writeText(text).then(() => {
-    // Flash the button
     const btn = document.querySelector(`#detail-${id} .btn-save`);
     if (btn) { btn.textContent = 'COPIED!'; setTimeout(() => btn.textContent = 'COPY FOR CLAUDE', 1500); }
   }).catch(() => {
-    // Fallback: show in alert
     prompt('Copy this and paste to Claude:', text);
   });
 }
@@ -985,11 +1137,13 @@ function copyForClaude(id) {
 function exportLog() {
   const lines = ['# SIGNAL Issue Log\n', `Exported: ${new Date().toLocaleString()}\n`, '---\n'];
   issues.forEach(i => {
-    lines.push(`## ISSUE-${String(i.id).padStart(3,'0')} [${i.severity}] [${i.category}]${i.resolved?' [RESOLVED]':''}`);
+    const statusLabel = STATUS_LABELS[i.status||'open'] || i.status;
+    lines.push(`## ISSUE-${String(i.id).padStart(3,'0')} [${i.severity}] [${i.category}] [${statusLabel}]${i.resolved?' [RESOLVED]':''}`);
     lines.push(`**Job:** ${i.company} — ${i.role}`);
     lines.push(`**Profile:** ${i.profile}`);
     lines.push(`**Score:** ${i.score}`);
     lines.push(`**Concern:** ${i.concern}`);
+    if (i.notes) lines.push(`**Notes:** ${i.notes}`);
     if (i.root) lines.push(`**Root Cause:** ${i.root}`);
     lines.push(`**Logged:** ${i.time}`);
     lines.push('');
@@ -1009,7 +1163,6 @@ function esc(str) {
     .replace(/"/g,'&quot;');
 }
 
-// init flex for list
 document.getElementById('issue-list').style.display = 'flex';
 document.getElementById('issue-list').style.flexDirection = 'column';
 document.getElementById('issue-list').style.gap = '10px';
