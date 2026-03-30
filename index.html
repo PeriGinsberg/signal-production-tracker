@@ -711,6 +711,13 @@
     </div>
 
     <div>
+      <div class="sidebar-section-label">Filter by Tester</div>
+      <div class="filter-list" id="tester-filter-list">
+        <button class="filter-btn" data-filter="tester:all" onclick="setFilter('tester:all',this)">All testers <span class="count" id="fc-tester-all">0</span></button>
+      </div>
+    </div>
+
+    <div>
       <div class="sidebar-section-label">Actions</div>
       <button class="add-btn" onclick="openModal()">+ LOG ISSUE</button>
       <br><br>
@@ -904,6 +911,11 @@ function getFiltered() {
   } else if (currentFilter.startsWith('status:')) {
     const s = currentFilter.replace('status:', '');
     list = list.filter(i => (i.status || 'open') === s);
+  } else if (currentFilter.startsWith('tester:') && currentFilter !== 'tester:all') {
+    const t = currentFilter.replace('tester:', '');
+    list = list.filter(i => i.tester === t);
+  } else if (currentFilter === 'tester:all') {
+    // show all — no filter
   } else {
     list = list.filter(i => i.severity === currentFilter || i.category === currentFilter);
   }
@@ -1125,6 +1137,20 @@ function updateStats() {
     const el = document.getElementById(`fc-${s}`);
     if (el) el.textContent = issues.filter(i=>(i.status||'open')===s).length;
   });
+
+  // tester filter list — rebuild dynamically from live data
+  const testers = [...new Set(issues.map(i => i.tester).filter(Boolean))].sort();
+  const testerList = document.getElementById('tester-filter-list');
+  if (testerList) {
+    const activeTesterFilter = currentFilter.startsWith('tester:') ? currentFilter : 'tester:all';
+    let testerHTML = `<button class="filter-btn ${activeTesterFilter === 'tester:all' ? 'active' : ''}" data-filter="tester:all" onclick="setFilter('tester:all',this)">All testers <span class="count">${issues.length}</span></button>`;
+    testers.forEach(t => {
+      const count = issues.filter(i => i.tester === t).length;
+      const key = 'tester:' + t;
+      testerHTML += `<button class="filter-btn ${activeTesterFilter === key ? 'active' : ''}" data-filter="${key}" onclick="setFilter('${key}',this)">${esc(t)} <span class="count">${count}</span></button>`;
+    });
+    testerList.innerHTML = testerHTML;
+  }
 }
 
 function toggleDetail(id) {
@@ -1136,7 +1162,11 @@ function setFilter(f, btn) {
   currentFilter = f;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const label = f === 'all' ? 'ALL ISSUES' : f.replace('status:','').toUpperCase().replace('_',' ');
+  let label = 'ALL ISSUES';
+  if (f === 'all') label = 'ALL ISSUES';
+  else if (f === 'tester:all') label = 'ALL TESTERS';
+  else if (f.startsWith('tester:')) label = f.replace('tester:','').toUpperCase() + ' — ISSUES';
+  else label = f.replace('status:','').toUpperCase().replace(/_/g,' ');
   document.getElementById('view-label').textContent = label;
   render();
 }
