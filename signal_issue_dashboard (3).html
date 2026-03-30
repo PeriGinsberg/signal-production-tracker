@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIGNAL — Issue Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #080c14;
+    --bg2: #0d1420;
+    --bg3: #121a28;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: rgba(255,255,255,0.90);
+    --muted: rgba(255,255,255,0.40);
+    --dim: rgba(255,255,255,0.22);
+
+    --green: #4ade80;
+    --green-bg: rgba(74,222,128,0.08);
+    --green-border: rgba(74,222,128,0.25);
+
+    --amber: #fbbf24;
+    --amber-bg: rgba(251,191,36,0.08);
+    --amber-border: rgba(251,191,36,0.25);
+
+    --red: #f87171;
+    --red-bg: rgba(248,113,113,0.08);
+    --red-border: rgba(248,113,113,0.25);
+
+    --blue: #51ADE5;
+    --blue-bg: rgba(81,173,229,0.08);
+    --blue-border: rgba(81,173,229,0.25);
+
+    --purple: #a78bfa;
+    --purple-bg: rgba(167,139,250,0.08);
+    --purple-border: rgba(167,139,250,0.25);
+
+    --orange: #fb923c;
+    --orange-bg: rgba(251,146,60,0.08);
+    --orange-border: rgba(251,146,60,0.25);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo span { color: var(--amber); }
+
+  .session-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  /* ── LAYOUT ── */
+  .shell {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: calc(100vh - 53px);
+  }
+
+  /* ── SIDEBAR ── */
+  aside {
+    border-right: 1px solid var(--border);
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    position: sticky;
+    top: 53px;
+    height: calc(100vh - 53px);
+    overflow-y: auto;
+  }
+
+  .sidebar-section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 8px;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .stat-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 10px 8px;
+    text-align: center;
+  }
+  .stat-box .num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+  .stat-box .label {
+    font-size: 9px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .stat-box.p1 .num { color: var(--red); }
+  .stat-box.p2 .num { color: var(--amber); }
+  .stat-box.p3 .num { color: var(--blue); }
+  .stat-box.total .num { color: var(--text); }
+
+  .filter-list { display: flex; flex-direction: column; gap: 3px; }
+
+  .filter-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    text-align: left;
+  }
+  .filter-btn:hover { background: var(--bg3); color: var(--text); }
+  .filter-btn.active { background: var(--bg3); color: var(--text); }
+  .filter-btn .count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--muted);
+  }
+
+  .add-btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-border);
+    border-radius: 8px;
+    color: var(--amber);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .add-btn:hover { background: rgba(251,191,36,0.15); }
+
+  /* ── MAIN ── */
+  main {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .main-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .main-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .sort-control {
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sort-control select {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 11px;
+    padding: 3px 6px;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+
+  /* ── ISSUE CARD ── */
+  .issue-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .issue-card:hover { border-color: var(--border2); }
+
+  .issue-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .issue-id {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--dim);
+    margin-top: 1px;
+    flex-shrink: 0;
+    width: 72px;
+  }
+
+  .issue-main { flex: 1; min-width: 0; }
+
+  .issue-job {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .issue-concern {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .issue-badges {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    padding: 3px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+
+  /* Severity badges */
+  .badge-p1 { background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); }
+  .badge-p2 { background: var(--amber-bg); border: 1px solid var(--amber-border); color: var(--amber); }
+  .badge-p3 { background: var(--blue-bg); border: 1px solid var(--blue-border); color: var(--blue); }
+
+  /* Category badges */
+  .badge-scoring { background: var(--purple-bg); border: 1px solid var(--purple-border); color: var(--purple); }
+  .badge-extraction { background: var(--orange-bg); border: 1px solid var(--orange-border); color: var(--orange); }
+  .badge-bullets { background: var(--green-bg); border: 1px solid var(--green-border); color: var(--green); }
+  .badge-risk_flags { background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); }
+  .badge-false_positive { background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); }
+  .badge-false_negative { background: var(--amber-bg); border: 1px solid var(--amber-border); color: var(--amber); }
+  .badge-ui { background: var(--blue-bg); border: 1px solid var(--blue-border); color: var(--blue); }
+
+  /* Score badge */
+  .score-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+  }
+
+  /* ── EXPANDED DETAIL ── */
+  .issue-detail {
+    border-top: 1px solid var(--border);
+    padding: 14px 16px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .issue-detail.open { display: flex; }
+
+  .detail-row {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .detail-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 0.5px;
+    padding-top: 1px;
+  }
+  .detail-value { color: var(--muted); line-height: 1.5; }
+  .detail-value.root { color: var(--amber); font-style: italic; }
+
+  .detail-divider {
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 580px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .modal-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text);
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  input, textarea, select {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    padding: 9px 11px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--amber-border); }
+  textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+  select option { background: var(--bg2); }
+
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  .btn-cancel {
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+  .btn-cancel:hover { border-color: var(--text); color: var(--text); }
+
+  .btn-save {
+    padding: 8px 20px;
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-border);
+    border-radius: 6px;
+    color: var(--amber);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+  .btn-save:hover { background: rgba(251,191,36,0.15); }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    line-height: 2;
+  }
+
+  /* ── TRIAGE VIEW ── */
+  .triage-section {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .triage-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .triage-header .triage-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .triage-body { padding: 12px 16px; font-size: 12px; color: var(--muted); line-height: 1.8; }
+
+  /* export btn */
+  .export-btn {
+    padding: 7px 14px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    transition: color 0.15s;
+  }
+  .export-btn:hover { color: var(--text); }
+
+  /* resolved */
+  .issue-card.resolved { opacity: 0.45; }
+  .badge-resolved { background: var(--bg3); border: 1px solid var(--border); color: var(--dim); }
+
+  /* view toggle */
+  .view-toggle { display: flex; gap: 4px; }
+  .view-btn {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .view-btn.active { background: var(--bg3); color: var(--text); border-color: var(--border2); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">SIGNAL<span>—</span> ISSUE LOG</div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <div id="conn-status" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)">● CONNECTING...</div>
+    <div class="session-badge" id="session-date">Loading...</div>
+  </div>
+</header>
+
+<div class="shell">
+  <aside>
+    <div>
+      <div class="sidebar-section-label">Summary</div>
+      <div class="stat-grid">
+        <div class="stat-box total"><div class="num" id="stat-total">0</div><div class="label">Total</div></div>
+        <div class="stat-box p1"><div class="num" id="stat-p1">0</div><div class="label">P1 Wrong</div></div>
+        <div class="stat-box p2"><div class="num" id="stat-p2">0</div><div class="label">P2 Output</div></div>
+        <div class="stat-box p3"><div class="num" id="stat-p3">0</div><div class="label">P3 Minor</div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sidebar-section-label">Filter</div>
+      <div class="filter-list">
+        <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">All issues <span class="count" id="fc-all">0</span></button>
+        <button class="filter-btn" data-filter="P1" onclick="setFilter('P1',this)">P1 — Wrong decision <span class="count" id="fc-P1">0</span></button>
+        <button class="filter-btn" data-filter="P2" onclick="setFilter('P2',this)">P2 — Misleading <span class="count" id="fc-P2">0</span></button>
+        <button class="filter-btn" data-filter="P3" onclick="setFilter('P3',this)">P3 — Minor <span class="count" id="fc-P3">0</span></button>
+        <button class="filter-btn" data-filter="scoring" onclick="setFilter('scoring',this)">Scoring <span class="count" id="fc-scoring">0</span></button>
+        <button class="filter-btn" data-filter="extraction" onclick="setFilter('extraction',this)">Extraction <span class="count" id="fc-extraction">0</span></button>
+        <button class="filter-btn" data-filter="bullets" onclick="setFilter('bullets',this)">Bullets <span class="count" id="fc-bullets">0</span></button>
+        <button class="filter-btn" data-filter="risk_flags" onclick="setFilter('risk_flags',this)">Risk flags <span class="count" id="fc-risk_flags">0</span></button>
+        <button class="filter-btn" data-filter="ui" onclick="setFilter('ui',this)">UI <span class="count" id="fc-ui">0</span></button>
+      </div>
+    </div>
+
+    <div>
+      <div class="sidebar-section-label">Actions</div>
+      <button class="add-btn" onclick="openModal()">+ LOG ISSUE</button>
+      <br><br>
+      <button class="export-btn" onclick="exportLog()" style="width:100%">EXPORT LOG</button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="main-header">
+      <div class="main-title" id="view-label">ALL ISSUES</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="view-toggle">
+          <button class="view-btn active" id="vbtn-list" onclick="setView('list')">LIST</button>
+          <button class="view-btn" id="vbtn-triage" onclick="setView('triage')">TRIAGE</button>
+        </div>
+        <div class="sort-control">
+          Sort: <select id="sort-select" onchange="render()">
+            <option value="newest">Newest first</option>
+            <option value="severity">Severity</option>
+            <option value="category">Category</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="issue-list"></div>
+    <div id="triage-view" style="display:none"></div>
+  </main>
+</div>
+
+<!-- ADD ISSUE MODAL -->
+<div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-title">LOG NEW ISSUE</div>
+
+    <div class="form-group">
+      <label class="form-label">Your Concern</label>
+      <textarea id="f-concern" placeholder="What looked wrong or unexpected? One sentence is fine." style="min-height:60px"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Profile JSON <span style="color:var(--dim);font-size:9px;letter-spacing:0">(paste full profile_signals object)</span></label>
+      <textarea id="f-profile-json" placeholder='{"targetFamilies":["Finance"],...}' style="min-height:90px;font-family:IBM Plex Mono,monospace;font-size:11px"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Job Description <span style="color:var(--dim);font-size:9px;letter-spacing:0">(paste full text)</span></label>
+      <textarea id="f-job-desc" placeholder="Paste the full job description here..." style="min-height:90px"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Output JSON <span style="color:var(--dim);font-size:9px;letter-spacing:0">(paste full result JSON)</span></label>
+      <textarea id="f-output-json" placeholder='{"decision":"Apply","score":75,...}' style="min-height:90px;font-family:IBM Plex Mono,monospace;font-size:11px"></textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Category <span style="color:var(--dim);font-size:9px;letter-spacing:0">(Claude will override)</span></label>
+        <select id="f-category">
+          <option value="scoring">scoring</option>
+          <option value="extraction">extraction</option>
+          <option value="bullets">bullets</option>
+          <option value="risk_flags">risk_flags</option>
+          <option value="false_positive">false_positive</option>
+          <option value="false_negative">false_negative</option>
+          <option value="ui">ui</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Severity <span style="color:var(--dim);font-size:9px;letter-spacing:0">(Claude will override)</span></label>
+        <select id="f-severity">
+          <option value="P1">P1 — Wrong decision</option>
+          <option value="P2" selected>P2 — Misleading output</option>
+          <option value="P3">P3 — Minor / cosmetic</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveIssue()">SAVE ISSUE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Supabase config ──
+const SUPABASE_URL = "https://ejhnokcnahauvrcbcmic.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqaG5va2NuYWhhdXZyY2JjbWljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxMzczNzMsImV4cCI6MjA4MzcxMzM3M30.LzTMZDzDrx4UMWGu9y5qeg4AzwxukEWUu06q7Ts9Wb0";
+const TABLE = "signal_issues";
+
+async function sbFetch(path, opts = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+      ...( opts.headers || {} )
+    },
+    ...opts
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Supabase error ${res.status}: ${err}`);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+// ── State ──
+let issues = [];
+let currentFilter = 'all';
+let currentView = 'list';
+
+// ── Init ──
+document.getElementById('session-date').textContent =
+  new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+
+setStatus('loading');
+loadIssues();
+
+// Poll every 15s so both testers see each other's issues
+setInterval(loadIssues, 15000);
+
+async function loadIssues() {
+  try {
+    const data = await sbFetch(`${TABLE}?select=*&order=created_at.desc`);
+    issues = (data || []).map(row => ({
+      id: row.id,
+      company: row.company || '?',
+      role: row.role || '?',
+      profile: row.profile || '?',
+      score: row.score || '?',
+      concern: row.concern || '',
+      root: row.root_cause || '',
+      profileJson: row.profile_json || '',
+      jobDesc: row.job_desc || '',
+      outputJson: row.output_json || '',
+      category: row.category || 'scoring',
+      severity: row.severity || 'P2',
+      time: new Date(row.created_at).toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'}),
+      resolved: row.resolved || false,
+      claudeAnalysis: row.claude_analysis || null,
+    }));
+    setStatus('live');
+    render();
+  } catch(e) {
+    setStatus('error', e.message);
+  }
+}
+
+function setStatus(state, msg) {
+  const el = document.getElementById('conn-status');
+  if (state === 'loading') { el.textContent = '● CONNECTING...'; el.style.color = 'var(--muted)'; }
+  else if (state === 'live') { el.textContent = '● LIVE'; el.style.color = 'var(--green)'; }
+  else if (state === 'error') { el.textContent = '● ERROR'; el.style.color = 'var(--red)'; el.title = msg; }
+  else if (state === 'saving') { el.textContent = '● SAVING...'; el.style.color = 'var(--amber)'; }
+}
+
+// ── Render ──
+function render() {
+  updateStats();
+  if (currentView === 'list') renderList();
+  else renderTriage();
+}
+
+function getFiltered() {
+  let list = [...issues];
+  if (currentFilter !== 'all') {
+    list = list.filter(i =>
+      i.severity === currentFilter ||
+      i.category === currentFilter
+    );
+  }
+  const sort = document.getElementById('sort-select').value;
+  if (sort === 'newest') list.sort((a,b) => b.id - a.id);
+  else if (sort === 'severity') list.sort((a,b) => a.severity.localeCompare(b.severity));
+  else if (sort === 'category') list.sort((a,b) => a.category.localeCompare(b.category));
+  return list;
+}
+
+function renderList() {
+  const el = document.getElementById('issue-list');
+  const list = getFiltered();
+  if (!list.length) {
+    el.innerHTML = '<div class="empty">NO ISSUES LOGGED YET<br>Click + LOG ISSUE to add one</div>';
+    return;
+  }
+  el.innerHTML = list.map(issue => issueCard(issue)).join('');
+}
+
+function issueCard(issue) {
+  const catClass = `badge-${issue.category}`;
+  const sevClass = `badge-${issue.severity.toLowerCase()}`;
+  return `
+    <div class="issue-card ${issue.resolved ? 'resolved' : ''}" id="card-${issue.id}">
+      <div class="issue-card-header" onclick="toggleDetail(${issue.id})">
+        <div class="issue-id">ISSUE-${String(issue.id).padStart(3,'0')}</div>
+        <div class="issue-main">
+          <div class="issue-job">${esc(issue.company)} — ${esc(issue.role)}</div>
+          <div class="issue-concern">${esc(issue.concern.slice(0,120))}${issue.concern.length > 120 ? '…' : ''}</div>
+        </div>
+        <div class="issue-badges">
+          <span class="badge ${sevClass}">${issue.severity}</span>
+          <span class="badge ${catClass}">${issue.category}</span>
+          ${issue.score ? `<span class="score-badge">${esc(issue.score)}</span>` : ''}
+          ${issue.claudeAnalysis ? `<span class="badge" style="background:var(--green-bg);border:1px solid var(--green-border);color:var(--green)">ANALYZED</span>` : ''}
+        </div>
+      </div>
+      <div class="issue-detail" id="detail-${issue.id}">
+        <div class="detail-row"><div class="detail-label">Profile</div><div class="detail-value">${esc(issue.profile)}</div></div>
+        <div class="detail-row"><div class="detail-label">Score/Decision</div><div class="detail-value">${esc(issue.score)}</div></div>
+        <div class="detail-row"><div class="detail-label">Concern</div><div class="detail-value">${esc(issue.concern)}</div></div>
+        ${issue.claudeAnalysis ? `
+        <div class="detail-divider"></div>
+        <div class="detail-row"><div class="detail-label" style="color:var(--green)">Root Cause</div><div class="detail-value root">${esc(issue.claudeAnalysis.rootCause||'')}</div></div>
+        <div class="detail-row"><div class="detail-label" style="color:var(--green)">Category</div><div class="detail-value" style="color:var(--amber)">${esc(issue.claudeAnalysis.category||'')} / ${esc(issue.claudeAnalysis.severity||'')}</div></div>
+        ` : ''}
+        ${issue.jobDesc ? `<div class="detail-row"><div class="detail-label">Job Desc</div><div class="detail-value" style="font-size:11px;max-height:60px;overflow:hidden">${esc(issue.jobDesc.slice(0,200))}…</div></div>` : ''}
+        ${issue.outputJson ? `<div class="detail-row"><div class="detail-label">Output JSON</div><div class="detail-value" style="font-family:IBM Plex Mono,monospace;font-size:10px;max-height:50px;overflow:hidden">${esc(issue.outputJson.slice(0,150))}…</div></div>` : ''}
+        <div class="detail-row"><div class="detail-label">Logged</div><div class="detail-value">${issue.time}</div></div>
+        <div class="detail-divider"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-save" style="font-size:11px;padding:6px 12px" onclick="copyForClaude(${issue.id})">COPY FOR CLAUDE</button>
+          <button class="btn-cancel" style="font-size:11px;padding:5px 10px" onclick="toggleResolved(${issue.id})">${issue.resolved ? 'Reopen' : 'Mark resolved'}</button>
+          <button class="btn-cancel" style="font-size:11px;padding:5px 10px" onclick="deleteIssue(${issue.id})">Delete</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderTriage() {
+  const el = document.getElementById('triage-view');
+  if (!issues.length) {
+    el.innerHTML = '<div class="empty">NO ISSUES TO TRIAGE YET</div>';
+    return;
+  }
+
+  // Group by category
+  const byCategory = {};
+  issues.filter(i => !i.resolved).forEach(i => {
+    if (!byCategory[i.category]) byCategory[i.category] = [];
+    byCategory[i.category].push(i);
+  });
+
+  // Priority order
+  const catOrder = ['scoring','extraction','risk_flags','false_positive','false_negative','bullets','ui'];
+  const catColors = {
+    scoring: 'var(--purple)', extraction: 'var(--orange)', bullets: 'var(--green)',
+    risk_flags: 'var(--red)', false_positive: 'var(--red)', false_negative: 'var(--amber)', ui: 'var(--blue)'
+  };
+
+  let html = '';
+  catOrder.forEach(cat => {
+    const items = byCategory[cat];
+    if (!items || !items.length) return;
+    const p1 = items.filter(i => i.severity === 'P1');
+    const p2 = items.filter(i => i.severity === 'P2');
+    const p3 = items.filter(i => i.severity === 'P3');
+    html += `
+      <div class="triage-section">
+        <div class="triage-header">
+          <span style="width:8px;height:8px;border-radius:50%;background:${catColors[cat]||'var(--muted)'};flex-shrink:0;display:inline-block"></span>
+          <span class="triage-title" style="color:${catColors[cat]||'var(--text)'}">${cat}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-left:auto">${items.length} issue${items.length!==1?'s':''}</span>
+        </div>
+        <div class="triage-body">
+          ${p1.length ? `<strong style="color:var(--red)">P1:</strong> ${p1.map(i => `<span title="${esc(i.concern)}">ISSUE-${String(i.id).padStart(3,'0')} ${esc(i.company)}/${esc(i.role)}</span>`).join(' · ')}<br>` : ''}
+          ${p2.length ? `<strong style="color:var(--amber)">P2:</strong> ${p2.map(i => `<span title="${esc(i.concern)}">ISSUE-${String(i.id).padStart(3,'0')} ${esc(i.company)}/${esc(i.role)}</span>`).join(' · ')}<br>` : ''}
+          ${p3.length ? `<strong style="color:var(--blue)">P3:</strong> ${p3.map(i => `<span title="${esc(i.concern)}">ISSUE-${String(i.id).padStart(3,'0')} ${esc(i.company)}/${esc(i.role)}</span>`).join(' · ')}<br>` : ''}
+        </div>
+      </div>`;
+  });
+
+  el.innerHTML = html || '<div class="empty">ALL ISSUES RESOLVED</div>';
+}
+
+function updateStats() {
+  const open = issues.filter(i => !i.resolved);
+  document.getElementById('stat-total').textContent = open.length;
+  document.getElementById('stat-p1').textContent = open.filter(i => i.severity==='P1').length;
+  document.getElementById('stat-p2').textContent = open.filter(i => i.severity==='P2').length;
+  document.getElementById('stat-p3').textContent = open.filter(i => i.severity==='P3').length;
+
+  // filter counts
+  document.getElementById('fc-all').textContent = issues.length;
+  ['P1','P2','P3'].forEach(s => {
+    document.getElementById(`fc-${s}`).textContent = issues.filter(i=>i.severity===s).length;
+  });
+  ['scoring','extraction','bullets','risk_flags','ui'].forEach(c => {
+    document.getElementById(`fc-${c}`).textContent = issues.filter(i=>i.category===c).length;
+  });
+}
+
+// ── Interactions ──
+function toggleDetail(id) {
+  const el = document.getElementById(`detail-${id}`);
+  el.classList.toggle('open');
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('view-label').textContent = f === 'all' ? 'ALL ISSUES' : f.toUpperCase();
+  render();
+}
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('issue-list').style.display = v === 'list' ? 'flex' : 'none';
+  document.getElementById('issue-list').style.flexDirection = 'column';
+  document.getElementById('issue-list').style.gap = '10px';
+  document.getElementById('triage-view').style.display = v === 'triage' ? 'block' : 'none';
+  document.getElementById('vbtn-list').classList.toggle('active', v === 'list');
+  document.getElementById('vbtn-triage').classList.toggle('active', v === 'triage');
+  render();
+}
+
+// ── Modal ──
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('f-concern').focus();
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  ['concern','profile-json','job-desc','output-json'].forEach(f =>
+    document.getElementById(`f-${f}`).value = ''
+  );
+}
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modal')) closeModal();
+}
+
+async function saveIssue() {
+  const concern = document.getElementById('f-concern').value.trim();
+  const outputJson = document.getElementById('f-output-json').value.trim();
+  if (!concern) { alert('Concern is required.'); return; }
+
+  let company = '?', role = '?', profile = '?', score = '?';
+  try {
+    const parsed = JSON.parse(outputJson);
+    score = `${parsed.decision || '?'} / ${parsed.score || '?'}`;
+    const internLine = parsed.job_signals?.internship?.evidence?.internshipLine || '';
+    const inPersonLine = parsed.job_signals?.internship?.evidence?.inPersonLine || '';
+    const roleHint = internLine || inPersonLine;
+    if (roleHint) role = roleHint.slice(0, 80);
+    profile = (parsed.profile_signals?.targetFamilies || []).join(', ') || '?';
+  } catch(e) {}
+
+  const jobDesc = document.getElementById('f-job-desc').value.trim();
+  if (jobDesc) {
+    const firstLine = jobDesc.split('\n')[0].trim();
+    if (firstLine.length < 60) company = firstLine;
+  }
+
+  const row = {
+    company, role, profile, score, concern,
+    profile_json: document.getElementById('f-profile-json').value.trim(),
+    job_desc: jobDesc,
+    output_json: outputJson,
+    category: document.getElementById('f-category').value,
+    severity: document.getElementById('f-severity').value,
+    resolved: false,
+    root_cause: '',
+    claude_analysis: null,
+  };
+
+  setStatus('saving');
+  try {
+    await sbFetch(TABLE, { method: 'POST', body: JSON.stringify(row) });
+    closeModal();
+    await loadIssues();
+  } catch(e) {
+    alert('Failed to save: ' + e.message);
+    setStatus('error', e.message);
+  }
+}
+
+async function deleteIssue(id) {
+  if (!confirm('Delete this issue?')) return;
+  setStatus('saving');
+  try {
+    await sbFetch(`${TABLE}?id=eq.${id}`, { method: 'DELETE' });
+    await loadIssues();
+  } catch(e) { alert('Failed to delete: ' + e.message); setStatus('error', e.message); }
+}
+
+async function toggleResolved(id) {
+  const issue = issues.find(i => i.id === id);
+  if (!issue) return;
+  setStatus('saving');
+  try {
+    await sbFetch(`${TABLE}?id=eq.${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ resolved: !issue.resolved })
+    });
+    await loadIssues();
+  } catch(e) { alert('Failed to update: ' + e.message); setStatus('error', e.message); }
+}
+
+// persist is now a no-op (Supabase handles it)
+function persist() {}
+
+function copyForClaude(id) {
+  const issue = issues.find(i => i.id === id);
+  if (!issue) return;
+  const text = [
+    `SIGNAL ISSUE — ISSUE-${String(issue.id).padStart(3,'0')}`,
+    `Job: ${issue.company} — ${issue.role}`,
+    `Profile: ${issue.profile}`,
+    `Score/Decision: ${issue.score}`,
+    `My concern: ${issue.concern}`,
+    '',
+    issue.profileJson ? `## PROFILE JSON\n${issue.profileJson}` : '',
+    '',
+    issue.jobDesc ? `## JOB DESCRIPTION\n${issue.jobDesc}` : '',
+    '',
+    issue.outputJson ? `## OUTPUT JSON\n${issue.outputJson}` : '',
+  ].filter(l => l !== undefined).join('\n');
+
+  navigator.clipboard.writeText(text).then(() => {
+    // Flash the button
+    const btn = document.querySelector(`#detail-${id} .btn-save`);
+    if (btn) { btn.textContent = 'COPIED!'; setTimeout(() => btn.textContent = 'COPY FOR CLAUDE', 1500); }
+  }).catch(() => {
+    // Fallback: show in alert
+    prompt('Copy this and paste to Claude:', text);
+  });
+}
+
+function exportLog() {
+  const lines = ['# SIGNAL Issue Log\n', `Exported: ${new Date().toLocaleString()}\n`, '---\n'];
+  issues.forEach(i => {
+    lines.push(`## ISSUE-${String(i.id).padStart(3,'0')} [${i.severity}] [${i.category}]${i.resolved?' [RESOLVED]':''}`);
+    lines.push(`**Job:** ${i.company} — ${i.role}`);
+    lines.push(`**Profile:** ${i.profile}`);
+    lines.push(`**Score:** ${i.score}`);
+    lines.push(`**Concern:** ${i.concern}`);
+    if (i.root) lines.push(`**Root Cause:** ${i.root}`);
+    lines.push(`**Logged:** ${i.time}`);
+    lines.push('');
+  });
+  const blob = new Blob([lines.join('\n')], {type:'text/markdown'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `signal_issues_${new Date().toISOString().slice(0,10)}.md`;
+  a.click();
+}
+
+function esc(str) {
+  return String(str||'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// init flex for list
+document.getElementById('issue-list').style.display = 'flex';
+document.getElementById('issue-list').style.flexDirection = 'column';
+document.getElementById('issue-list').style.gap = '10px';
+</script>
+</body>
+</html>
