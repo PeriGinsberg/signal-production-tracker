@@ -40,6 +40,10 @@
     --orange: #fb923c;
     --orange-bg: rgba(251,146,60,0.08);
     --orange-border: rgba(251,146,60,0.25);
+
+    --teal: #2dd4bf;
+    --teal-bg: rgba(45,212,191,0.08);
+    --teal-border: rgba(45,212,191,0.25);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -53,7 +57,6 @@
     min-height: 100vh;
   }
 
-  /* ── HEADER ── */
   header {
     border-bottom: 1px solid var(--border);
     padding: 16px 24px;
@@ -85,14 +88,12 @@
     letter-spacing: 0.5px;
   }
 
-  /* ── LAYOUT ── */
   .shell {
     display: grid;
     grid-template-columns: 220px 1fr;
     min-height: calc(100vh - 53px);
   }
 
-  /* ── SIDEBAR ── */
   aside {
     border-right: 1px solid var(--border);
     padding: 20px 16px;
@@ -145,6 +146,9 @@
   .stat-box.p2 .num { color: var(--amber); }
   .stat-box.p3 .num { color: var(--blue); }
   .stat-box.total .num { color: var(--text); }
+  .stat-box.s-ready .num { color: var(--amber); }
+  .stat-box.s-verified .num { color: var(--green); }
+  .stat-box.s-closed .num { color: var(--dim); }
 
   .filter-list { display: flex; flex-direction: column; gap: 3px; }
 
@@ -191,7 +195,6 @@
   }
   .add-btn:hover { background: rgba(251,191,36,0.15); }
 
-  /* ── MAIN ── */
   main {
     padding: 24px;
     display: flex;
@@ -231,7 +234,6 @@
     font-family: 'IBM Plex Sans', sans-serif;
   }
 
-  /* ── ISSUE CARD ── */
   .issue-card {
     background: var(--bg2);
     border: 1px solid var(--border);
@@ -297,12 +299,10 @@
     text-transform: uppercase;
   }
 
-  /* Severity badges */
   .badge-p1 { background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); }
   .badge-p2 { background: var(--amber-bg); border: 1px solid var(--amber-border); color: var(--amber); }
   .badge-p3 { background: var(--blue-bg); border: 1px solid var(--blue-border); color: var(--blue); }
 
-  /* Category badges */
   .badge-scoring { background: var(--purple-bg); border: 1px solid var(--purple-border); color: var(--purple); }
   .badge-extraction { background: var(--orange-bg); border: 1px solid var(--orange-border); color: var(--orange); }
   .badge-bullets { background: var(--green-bg); border: 1px solid var(--green-border); color: var(--green); }
@@ -311,7 +311,13 @@
   .badge-false_negative { background: var(--amber-bg); border: 1px solid var(--amber-border); color: var(--amber); }
   .badge-ui { background: var(--blue-bg); border: 1px solid var(--blue-border); color: var(--blue); }
 
-  /* Score badge */
+  .badge-status-open      { background: var(--bg3); border: 1px solid var(--border2); color: var(--muted); }
+  .badge-status-indev     { background: var(--blue-bg); border: 1px solid var(--blue-border); color: var(--blue); }
+  .badge-status-ready_to_test { background: var(--amber-bg); border: 1px solid var(--amber-border); color: var(--amber); }
+  .badge-status-failed_retest { background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); }
+  .badge-status-verified  { background: var(--green-bg); border: 1px solid var(--green-border); color: var(--green); }
+  .badge-status-closed    { background: var(--bg3); border: 1px solid var(--border); color: var(--dim); }
+
   .score-badge {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 10px;
@@ -322,7 +328,271 @@
     padding: 2px 6px;
   }
 
-  /* ── EXPANDED DETAIL ── */
+  /* ── STATUS ROW ── */
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .status-row label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--dim);
+    flex-shrink: 0;
+  }
+  .status-select {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 5px 8px;
+    cursor: pointer;
+    flex: 1;
+  }
+  .status-select:focus { outline: none; border-color: var(--amber-border); }
+
+  /* Short notes — one line quick note in status bar */
+  .notes-input {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 11px;
+    padding: 5px 8px;
+    flex: 2;
+    outline: none;
+  }
+  .notes-input:focus { border-color: var(--amber-border); }
+  .notes-input::placeholder { color: var(--dim); }
+
+  .save-status-btn {
+    padding: 5px 12px;
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-border);
+    border-radius: 5px;
+    color: var(--amber);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .save-status-btn:hover { background: rgba(251,191,36,0.15); }
+
+  /* ── EXPANDED NOTES PANEL ── */
+  .notes-panel {
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    display: none;
+    flex-direction: column;
+    gap: 0;
+  }
+  .notes-panel.open { display: flex; }
+
+  .notes-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .notes-panel-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--amber);
+  }
+  .notes-panel-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--dim);
+  }
+
+  /* Thread of note entries */
+  .note-thread {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+
+  .note-entry {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .note-entry:last-child { border-bottom: none; }
+
+  .note-entry-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .note-author {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--amber);
+  }
+  .note-timestamp {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--dim);
+  }
+  .note-type-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+  .note-type-retest   { background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); }
+  .note-type-update   { background: var(--blue-bg); border: 1px solid var(--blue-border); color: var(--blue); }
+  .note-type-verified { background: var(--green-bg); border: 1px solid var(--green-border); color: var(--green); }
+  .note-type-comment  { background: var(--bg3); border: 1px solid var(--border2); color: var(--muted); }
+
+  .note-body {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.55;
+    white-space: pre-wrap;
+  }
+
+  /* Add note composer */
+  .note-composer {
+    border-top: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--bg2);
+  }
+
+  .note-composer-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .note-author-input {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 6px 9px;
+    width: 130px;
+    outline: none;
+  }
+  .note-author-input:focus { border-color: var(--amber-border); }
+  .note-author-input::placeholder { color: var(--dim); }
+
+  .note-type-select {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 6px 9px;
+    outline: none;
+    cursor: pointer;
+  }
+  .note-type-select:focus { border-color: var(--amber-border); }
+
+  .note-textarea {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    padding: 9px 11px;
+    outline: none;
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.55;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+  .note-textarea:focus { border-color: var(--amber-border); }
+  .note-textarea::placeholder { color: var(--dim); }
+
+  .note-submit-btn {
+    align-self: flex-end;
+    padding: 7px 16px;
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-border);
+    border-radius: 5px;
+    color: var(--amber);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .note-submit-btn:hover { background: rgba(251,191,36,0.15); }
+
+  .notes-empty {
+    padding: 20px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 0.5px;
+    text-align: center;
+  }
+
+  /* Notes toggle button */
+  .notes-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border-top: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--amber);
+    border-left: none; border-right: none; border-bottom: none;
+    width: 100%;
+    text-align: left;
+    transition: background 0.15s;
+  }
+  .notes-toggle:hover { background: var(--amber-bg); }
+  .notes-toggle .chevron { transition: transform 0.2s; display: inline-block; }
+  .notes-toggle.open .chevron { transform: rotate(90deg); }
+  .notes-toggle .note-count-pill {
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-border);
+    border-radius: 10px;
+    font-size: 9px;
+    padding: 1px 7px;
+    color: var(--amber);
+    margin-left: 4px;
+  }
+
   .issue-detail {
     border-top: 1px solid var(--border);
     padding: 14px 16px;
@@ -348,12 +618,8 @@
   .detail-value { color: var(--muted); line-height: 1.5; }
   .detail-value.root { color: var(--amber); font-style: italic; }
 
-  .detail-divider {
-    height: 1px;
-    background: var(--border);
-  }
+  .detail-divider { height: 1px; background: var(--border); }
 
-  /* ── MODAL ── */
   .modal-overlay {
     position: fixed;
     inset: 0;
@@ -443,7 +709,6 @@
   }
   .btn-save:hover { background: rgba(251,191,36,0.15); }
 
-  /* ── EMPTY STATE ── */
   .empty {
     text-align: center;
     padding: 60px 20px;
@@ -454,7 +719,6 @@
     line-height: 2;
   }
 
-  /* ── TRIAGE VIEW ── */
   .triage-section {
     background: var(--bg2);
     border: 1px solid var(--border);
@@ -479,7 +743,6 @@
   }
   .triage-body { padding: 12px 16px; font-size: 12px; color: var(--muted); line-height: 1.8; }
 
-  /* export btn */
   .export-btn {
     padding: 7px 14px;
     background: var(--bg3);
@@ -493,11 +756,9 @@
   }
   .export-btn:hover { color: var(--text); }
 
-  /* resolved */
   .issue-card.resolved { opacity: 0.45; }
   .badge-resolved { background: var(--bg3); border: 1px solid var(--border); color: var(--dim); }
 
-  /* view toggle */
   .view-toggle { display: flex; gap: 4px; }
   .view-btn {
     padding: 5px 10px;
@@ -510,6 +771,95 @@
     font-family: 'IBM Plex Mono', monospace;
   }
   .view-btn.active { background: var(--bg3); color: var(--text); border-color: var(--border2); }
+
+  /* ── RETEST KIT — now stays open ── */
+  .retest-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border-top: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--teal);
+    border-left: none; border-right: none; border-bottom: none;
+    width: 100%;
+    text-align: left;
+    transition: background 0.15s;
+  }
+  .retest-toggle:hover { background: var(--teal-bg); }
+  .retest-toggle .chevron { transition: transform 0.2s; display: inline-block; }
+  .retest-toggle.open .chevron { transform: rotate(90deg); }
+
+  .retest-kit {
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    border-top: 1px solid var(--teal-border);
+    background: rgba(45,212,191,0.03);
+  }
+  .retest-kit.open { display: flex; }
+
+  .retest-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .retest-row:last-child { border-bottom: none; }
+  .retest-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--dim);
+    flex-shrink: 0;
+    width: 100px;
+  }
+  .retest-value {
+    font-size: 12px;
+    color: var(--muted);
+    flex: 1;
+    font-family: 'IBM Plex Mono', monospace;
+    word-break: break-all;
+  }
+  .copy-btn {
+    padding: 4px 10px;
+    background: var(--teal-bg);
+    border: 1px solid var(--teal-border);
+    border-radius: 4px;
+    color: var(--teal);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .copy-btn:hover { background: rgba(45,212,191,0.15); }
+  .copy-btn.copied { background: rgba(74,222,128,0.15); border-color: var(--green-border); color: var(--green); }
+
+  .job-desc-box {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 10px 12px;
+    max-height: 120px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    flex: 1;
+  }
 </style>
 </head>
 <body>
@@ -531,13 +881,28 @@
         <div class="stat-box p1"><div class="num" id="stat-p1">0</div><div class="label">P1 Wrong</div></div>
         <div class="stat-box p2"><div class="num" id="stat-p2">0</div><div class="label">P2 Output</div></div>
         <div class="stat-box p3"><div class="num" id="stat-p3">0</div><div class="label">P3 Minor</div></div>
+        <div class="stat-box s-ready"><div class="num" id="stat-ready">0</div><div class="label">To Test</div></div>
+        <div class="stat-box s-verified"><div class="num" id="stat-verified">0</div><div class="label">Verified</div></div>
+        <div class="stat-box s-closed" style="grid-column:span 2"><div class="num" id="stat-closed">0</div><div class="label">Closed</div></div>
       </div>
     </div>
 
     <div>
-      <div class="sidebar-section-label">Filter</div>
+      <div class="sidebar-section-label">Filter by Status</div>
       <div class="filter-list">
         <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">All issues <span class="count" id="fc-all">0</span></button>
+        <button class="filter-btn" data-filter="status:open" onclick="setFilter('status:open',this)">Open <span class="count" id="fc-open">0</span></button>
+        <button class="filter-btn" data-filter="status:indev" onclick="setFilter('status:indev',this)">In dev <span class="count" id="fc-indev">0</span></button>
+        <button class="filter-btn" data-filter="status:ready_to_test" onclick="setFilter('status:ready_to_test',this)">Ready to test <span class="count" id="fc-ready_to_test">0</span></button>
+        <button class="filter-btn" data-filter="status:failed_retest" onclick="setFilter('status:failed_retest',this)">Failed retest <span class="count" id="fc-failed_retest">0</span></button>
+        <button class="filter-btn" data-filter="status:verified" onclick="setFilter('status:verified',this)">Verified <span class="count" id="fc-verified">0</span></button>
+        <button class="filter-btn" data-filter="status:closed" onclick="setFilter('status:closed',this)">Closed <span class="count" id="fc-closed">0</span></button>
+      </div>
+    </div>
+
+    <div>
+      <div class="sidebar-section-label">Filter by Type</div>
+      <div class="filter-list">
         <button class="filter-btn" data-filter="P1" onclick="setFilter('P1',this)">P1 — Wrong decision <span class="count" id="fc-P1">0</span></button>
         <button class="filter-btn" data-filter="P2" onclick="setFilter('P2',this)">P2 — Misleading <span class="count" id="fc-P2">0</span></button>
         <button class="filter-btn" data-filter="P3" onclick="setFilter('P3',this)">P3 — Minor <span class="count" id="fc-P3">0</span></button>
@@ -546,6 +911,13 @@
         <button class="filter-btn" data-filter="bullets" onclick="setFilter('bullets',this)">Bullets <span class="count" id="fc-bullets">0</span></button>
         <button class="filter-btn" data-filter="risk_flags" onclick="setFilter('risk_flags',this)">Risk flags <span class="count" id="fc-risk_flags">0</span></button>
         <button class="filter-btn" data-filter="ui" onclick="setFilter('ui',this)">UI <span class="count" id="fc-ui">0</span></button>
+      </div>
+    </div>
+
+    <div>
+      <div class="sidebar-section-label">Filter by Tester</div>
+      <div class="filter-list" id="tester-filter-list">
+        <button class="filter-btn" data-filter="tester:all" onclick="setFilter('tester:all',this)">All testers <span class="count" id="fc-tester-all">0</span></button>
       </div>
     </div>
 
@@ -570,6 +942,7 @@
             <option value="newest">Newest first</option>
             <option value="severity">Severity</option>
             <option value="category">Category</option>
+            <option value="status">Status</option>
           </select>
         </div>
       </div>
@@ -607,6 +980,17 @@
 
     <div class="form-row">
       <div class="form-group">
+        <label class="form-label">Tester</label>
+        <input id="f-tester" placeholder="Your name (e.g. Erin)" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Test Account Email</label>
+        <input id="f-test-account" placeholder="erin+testryan1@workforcereadynow.com" type="email" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
         <label class="form-label">Category <span style="color:var(--dim);font-size:9px;letter-spacing:0">(Claude will override)</span></label>
         <select id="f-category">
           <option value="scoring">scoring</option>
@@ -636,10 +1020,26 @@
 </div>
 
 <script>
-// ── Supabase config ──
 const SUPABASE_URL = "https://ejhnokcnahauvrcbcmic.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqaG5va2NuYWhhdXZyY2JjbWljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxMzczNzMsImV4cCI6MjA4MzcxMzM3M30.LzTMZDzDrx4UMWGu9y5qeg4AzwxukEWUu06q7Ts9Wb0";
 const TABLE = "signal_issues";
+const NOTES_TABLE = "signal_issue_notes";
+
+const STATUS_LABELS = {
+  open:           'Open',
+  indev:          'In dev',
+  ready_to_test:  'Ready to test',
+  failed_retest:  'Failed retest',
+  verified:       'Verified',
+  closed:         'Closed',
+};
+
+const NOTE_TYPE_LABELS = {
+  retest:   'Failed Retest',
+  update:   'Update',
+  verified: 'Verified',
+  comment:  'Comment',
+};
 
 async function sbFetch(path, opts = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -660,41 +1060,58 @@ async function sbFetch(path, opts = {}) {
   return text ? JSON.parse(text) : null;
 }
 
-// ── State ──
 let issues = [];
+let notesMap = {}; // issue_id -> array of notes
 let currentFilter = 'all';
 let currentView = 'list';
 
-// ── Init ──
+// Track which retest kits are open across re-renders
+const openRetestKits = new Set();
+const openNotePanels = new Set();
+const openDetails = new Set();
+
 document.getElementById('session-date').textContent =
   new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
 
 setStatus('loading');
-loadIssues();
+loadAll();
+setInterval(loadAll, 20000);
 
-// Poll every 15s so both testers see each other's issues
-setInterval(loadIssues, 15000);
-
-async function loadIssues() {
+async function loadAll() {
   try {
-    const data = await sbFetch(`${TABLE}?select=*&order=created_at.desc`);
-    issues = (data || []).map(row => ({
-      id: row.id,
-      company: row.company || '?',
-      role: row.role || '?',
-      profile: row.profile || '?',
-      score: row.score || '?',
-      concern: row.concern || '',
-      root: row.root_cause || '',
-      profileJson: row.profile_json || '',
-      jobDesc: row.job_desc || '',
-      outputJson: row.output_json || '',
-      category: row.category || 'scoring',
-      severity: row.severity || 'P2',
-      time: new Date(row.created_at).toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'}),
-      resolved: row.resolved || false,
+    const [issueData, noteData] = await Promise.all([
+      sbFetch(`${TABLE}?select=*&order=created_at.desc`),
+      loadNotesSafe(),
+    ]);
+
+    issues = (issueData || []).map(row => ({
+      id:           row.id,
+      company:      row.company || '?',
+      role:         row.role || '?',
+      profile:      row.profile || '?',
+      score:        row.score || '?',
+      concern:      row.concern || '',
+      root:         row.root_cause || '',
+      profileJson:  row.profile_json || '',
+      jobDesc:      row.job_desc || '',
+      outputJson:   row.output_json || '',
+      category:     row.category || 'scoring',
+      severity:     row.severity || 'P2',
+      status:       row.status || 'open',
+      notes:        row.notes || '',
+      time:         new Date(row.created_at).toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'}),
+      resolved:     row.resolved || false,
+      tester:       row.tester || '',
+      testAccount:  row.test_account || '',
       claudeAnalysis: row.claude_analysis || null,
     }));
+
+    notesMap = {};
+    (noteData || []).forEach(n => {
+      if (!notesMap[n.issue_id]) notesMap[n.issue_id] = [];
+      notesMap[n.issue_id].push(n);
+    });
+
     setStatus('live');
     render();
   } catch(e) {
@@ -702,15 +1119,23 @@ async function loadIssues() {
   }
 }
 
-function setStatus(state, msg) {
-  const el = document.getElementById('conn-status');
-  if (state === 'loading') { el.textContent = '● CONNECTING...'; el.style.color = 'var(--muted)'; }
-  else if (state === 'live') { el.textContent = '● LIVE'; el.style.color = 'var(--green)'; }
-  else if (state === 'error') { el.textContent = '● ERROR'; el.style.color = 'var(--red)'; el.title = msg; }
-  else if (state === 'saving') { el.textContent = '● SAVING...'; el.style.color = 'var(--amber)'; }
+async function loadNotesSafe() {
+  try {
+    return await sbFetch(`${NOTES_TABLE}?select=*&order=created_at.asc`);
+  } catch(e) {
+    // Table may not exist yet — return empty
+    return [];
+  }
 }
 
-// ── Render ──
+function setStatus(state, msg) {
+  const el = document.getElementById('conn-status');
+  if (state === 'loading')  { el.textContent = '● CONNECTING...'; el.style.color = 'var(--muted)'; }
+  else if (state === 'live')    { el.textContent = '● LIVE';  el.style.color = 'var(--green)'; }
+  else if (state === 'error')   { el.textContent = '● ERROR'; el.style.color = 'var(--red)'; el.title = msg||''; }
+  else if (state === 'saving')  { el.textContent = '● SAVING...'; el.style.color = 'var(--amber)'; }
+}
+
 function render() {
   updateStats();
   if (currentView === 'list') renderList();
@@ -719,16 +1144,27 @@ function render() {
 
 function getFiltered() {
   let list = [...issues];
-  if (currentFilter !== 'all') {
-    list = list.filter(i =>
-      i.severity === currentFilter ||
-      i.category === currentFilter
-    );
+  if (currentFilter === 'all') {
+    // show all
+  } else if (currentFilter.startsWith('status:')) {
+    const s = currentFilter.replace('status:', '');
+    list = list.filter(i => (i.status || 'open') === s);
+  } else if (currentFilter.startsWith('tester:') && currentFilter !== 'tester:all') {
+    const t = currentFilter.replace('tester:', '');
+    list = list.filter(i => i.tester === t);
+  } else if (currentFilter === 'tester:all') {
+    // show all
+  } else {
+    list = list.filter(i => i.severity === currentFilter || i.category === currentFilter);
   }
   const sort = document.getElementById('sort-select').value;
-  if (sort === 'newest') list.sort((a,b) => b.id - a.id);
+  if (sort === 'newest')   list.sort((a,b) => b.id - a.id);
   else if (sort === 'severity') list.sort((a,b) => a.severity.localeCompare(b.severity));
   else if (sort === 'category') list.sort((a,b) => a.category.localeCompare(b.category));
+  else if (sort === 'status') {
+    const order = ['open','indev','ready_to_test','failed_retest','verified','closed'];
+    list.sort((a,b) => order.indexOf(a.status||'open') - order.indexOf(b.status||'open'));
+  }
   return list;
 }
 
@@ -736,15 +1172,55 @@ function renderList() {
   const el = document.getElementById('issue-list');
   const list = getFiltered();
   if (!list.length) {
-    el.innerHTML = '<div class="empty">NO ISSUES LOGGED YET<br>Click + LOG ISSUE to add one</div>';
+    el.innerHTML = '<div class="empty">NO ISSUES MATCH THIS FILTER</div>';
     return;
   }
   el.innerHTML = list.map(issue => issueCard(issue)).join('');
+
+  // Restore open states after re-render
+  openRetestKits.forEach(id => {
+    const kit = document.getElementById(`retest-kit-${id}`);
+    const toggle = document.getElementById(`retest-toggle-${id}`);
+    if (kit) kit.classList.add('open');
+    if (toggle) toggle.classList.add('open');
+  });
+  openNotePanels.forEach(id => {
+    const panel = document.getElementById(`notes-panel-${id}`);
+    const toggle = document.getElementById(`notes-toggle-${id}`);
+    if (panel) panel.classList.add('open');
+    if (toggle) toggle.classList.add('open');
+  });
+  openDetails.forEach(id => {
+    const detail = document.getElementById(`detail-${id}`);
+    if (detail) detail.classList.add('open');
+  });
 }
 
 function issueCard(issue) {
   const catClass = `badge-${issue.category}`;
   const sevClass = `badge-${issue.severity.toLowerCase()}`;
+  const status = issue.status || 'open';
+  const statusClass = `badge-status-${status}`;
+  const statusLabel = STATUS_LABELS[status] || status;
+  const noteList = notesMap[issue.id] || [];
+  const noteCount = noteList.length;
+
+  const statusOptions = Object.entries(STATUS_LABELS).map(([val, label]) =>
+    `<option value="${val}" ${status === val ? 'selected' : ''}>${label}</option>`
+  ).join('');
+
+  const notesHtml = noteCount > 0
+    ? noteList.map(n => `
+        <div class="note-entry">
+          <div class="note-entry-header">
+            <span class="note-author">${esc(n.author || 'Unknown')}</span>
+            <span class="note-timestamp">${new Date(n.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
+            <span class="note-type-badge note-type-${esc(n.note_type||'comment')}">${esc(NOTE_TYPE_LABELS[n.note_type]||n.note_type||'Comment')}</span>
+          </div>
+          <div class="note-body">${esc(n.body||'')}</div>
+        </div>`).join('')
+    : `<div class="notes-empty">NO NOTES YET — be the first to add context</div>`;
+
   return `
     <div class="issue-card ${issue.resolved ? 'resolved' : ''}" id="card-${issue.id}">
       <div class="issue-card-header" onclick="toggleDetail(${issue.id})">
@@ -756,10 +1232,73 @@ function issueCard(issue) {
         <div class="issue-badges">
           <span class="badge ${sevClass}">${issue.severity}</span>
           <span class="badge ${catClass}">${issue.category}</span>
+          <span class="badge ${statusClass}">${statusLabel}</span>
           ${issue.score ? `<span class="score-badge">${esc(issue.score)}</span>` : ''}
           ${issue.claudeAnalysis ? `<span class="badge" style="background:var(--green-bg);border:1px solid var(--green-border);color:var(--green)">ANALYZED</span>` : ''}
         </div>
       </div>
+
+      <!-- Status bar -->
+      <div class="status-row" onclick="event.stopPropagation()">
+        <label>Status</label>
+        <select class="status-select" id="sel-${issue.id}" onchange="updateStatusLocal(${issue.id}, this.value)">
+          ${statusOptions}
+        </select>
+        <input class="notes-input" id="notes-${issue.id}" placeholder="Quick note…" value="${esc(issue.notes)}" />
+        <button class="save-status-btn" onclick="saveStatus(${issue.id})">SAVE</button>
+      </div>
+
+      <!-- Retest Kit toggle — click to open, click again to close -->
+      <button class="retest-toggle" id="retest-toggle-${issue.id}" onclick="toggleRetest(${issue.id}, event)">
+        <span class="chevron">▶</span> RETEST KIT
+        ${issue.tester ? `<span style="color:var(--dim);font-weight:400;letter-spacing:0;text-transform:none;font-family:'IBM Plex Sans',sans-serif;font-size:11px;margin-left:4px">· logged by ${esc(issue.tester)}</span>` : ''}
+      </button>
+      <div class="retest-kit" id="retest-kit-${issue.id}">
+        ${issue.tester ? `<div class="retest-row"><div class="retest-label">Tester</div><div class="retest-value">${esc(issue.tester)}</div></div>` : ''}
+        ${issue.testAccount ? `
+        <div class="retest-row">
+          <div class="retest-label">Test Account</div>
+          <div class="retest-value">${esc(issue.testAccount)}</div>
+          <button class="copy-btn" onclick="copyText('${esc(issue.testAccount)}', this)">COPY</button>
+        </div>` : ''}
+        ${issue.score ? `<div class="retest-row"><div class="retest-label">Wrong Score</div><div class="retest-value" style="color:var(--red)">${esc(issue.score)}</div></div>` : ''}
+        ${issue.jobDesc ? `
+        <div class="retest-row" style="align-items:flex-start">
+          <div class="retest-label" style="padding-top:2px">Job Desc</div>
+          <div class="job-desc-box">${esc(issue.jobDesc)}</div>
+          <button class="copy-btn" style="align-self:flex-start;margin-top:2px" onclick="copyText(${JSON.stringify(issue.jobDesc)}, this)">COPY</button>
+        </div>` : '<div class="retest-row"><div class="retest-label">Job Desc</div><div class="retest-value" style="color:var(--dim)">Not logged</div></div>'}
+        <div class="retest-row">
+          <div class="retest-label">Concern</div>
+          <div class="retest-value" style="font-family:'IBM Plex Sans',sans-serif;color:var(--text)">${esc(issue.concern)}</div>
+          <button class="copy-btn" onclick="copyForRetest(${issue.id})">COPY ALL</button>
+        </div>
+      </div>
+
+      <!-- Expanded Notes Panel -->
+      <button class="notes-toggle" id="notes-toggle-${issue.id}" onclick="toggleNotes(${issue.id}, event)">
+        <span class="chevron">▶</span> NOTES &amp; RETEST LOG
+        ${noteCount > 0 ? `<span class="note-count-pill">${noteCount}</span>` : ''}
+      </button>
+      <div class="notes-panel" id="notes-panel-${issue.id}">
+        <div class="note-thread" id="note-thread-${issue.id}">
+          ${notesHtml}
+        </div>
+        <div class="note-composer" onclick="event.stopPropagation()">
+          <div class="note-composer-row">
+            <input class="note-author-input" id="note-author-${issue.id}" placeholder="Your name" />
+            <select class="note-type-select" id="note-type-${issue.id}">
+              <option value="comment">Comment</option>
+              <option value="retest">Failed Retest</option>
+              <option value="update">Update</option>
+              <option value="verified">Verified</option>
+            </select>
+          </div>
+          <textarea class="note-textarea" id="note-body-${issue.id}" placeholder="Describe what happened during retest, what you observed, what you changed, or any context that helps the team understand this issue…"></textarea>
+          <button class="note-submit-btn" onclick="submitNote(${issue.id})">ADD NOTE</button>
+        </div>
+      </div>
+
       <div class="issue-detail" id="detail-${issue.id}">
         <div class="detail-row"><div class="detail-label">Profile</div><div class="detail-value">${esc(issue.profile)}</div></div>
         <div class="detail-row"><div class="detail-label">Score/Decision</div><div class="detail-value">${esc(issue.score)}</div></div>
@@ -782,21 +1321,155 @@ function issueCard(issue) {
     </div>`;
 }
 
+function updateStatusLocal(id, newStatus) {
+  const issue = issues.find(i => i.id === id);
+  if (issue) issue.status = newStatus;
+  const card = document.getElementById(`card-${id}`);
+  if (!card) return;
+  const badges = card.querySelectorAll('.issue-badges .badge');
+  badges.forEach(b => {
+    if (b.className.includes('badge-status-')) {
+      b.className = `badge badge-status-${newStatus}`;
+      b.textContent = STATUS_LABELS[newStatus] || newStatus;
+    }
+  });
+}
+
+async function saveStatus(id) {
+  const sel   = document.getElementById(`sel-${id}`);
+  const notes = document.getElementById(`notes-${id}`);
+  if (!sel) return;
+
+  const newStatus = sel.value;
+  const newNotes  = notes ? notes.value.trim() : '';
+
+  const btn = sel.closest('.status-row').querySelector('.save-status-btn');
+  const orig = btn.textContent;
+  btn.textContent = '...';
+
+  setStatus('saving');
+  try {
+    await sbFetch(`${TABLE}?id=eq.${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: newStatus, notes: newNotes }),
+    });
+    const issue = issues.find(i => i.id === id);
+    if (issue) { issue.status = newStatus; issue.notes = newNotes; }
+    btn.textContent = 'SAVED!';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+    setStatus('live');
+    updateStats();
+  } catch(e) {
+    alert('Failed to save: ' + e.message);
+    setStatus('error', e.message);
+    btn.textContent = orig;
+  }
+}
+
+async function submitNote(id) {
+  const authorEl = document.getElementById(`note-author-${id}`);
+  const typeEl   = document.getElementById(`note-type-${id}`);
+  const bodyEl   = document.getElementById(`note-body-${id}`);
+
+  const author    = (authorEl?.value || '').trim();
+  const note_type = typeEl?.value || 'comment';
+  const body      = (bodyEl?.value || '').trim();
+
+  if (!body) { alert('Note body is required.'); return; }
+
+  const btn = document.querySelector(`#notes-panel-${id} .note-submit-btn`);
+  if (btn) { btn.textContent = 'SAVING...'; btn.disabled = true; }
+
+  setStatus('saving');
+  try {
+    const newNote = await sbFetch(NOTES_TABLE, {
+      method: 'POST',
+      body: JSON.stringify({ issue_id: id, author: author || null, note_type, body }),
+    });
+
+    // Add to local notesMap immediately
+    if (!notesMap[id]) notesMap[id] = [];
+    if (newNote && newNote[0]) notesMap[id].push(newNote[0]);
+
+    // Clear composer
+    if (bodyEl) bodyEl.value = '';
+
+    // Re-render just the thread
+    const thread = document.getElementById(`note-thread-${id}`);
+    if (thread) {
+      const noteList = notesMap[id] || [];
+      thread.innerHTML = noteList.map(n => `
+        <div class="note-entry">
+          <div class="note-entry-header">
+            <span class="note-author">${esc(n.author || 'Unknown')}</span>
+            <span class="note-timestamp">${new Date(n.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
+            <span class="note-type-badge note-type-${esc(n.note_type||'comment')}">${esc(NOTE_TYPE_LABELS[n.note_type]||n.note_type||'Comment')}</span>
+          </div>
+          <div class="note-body">${esc(n.body||'')}</div>
+        </div>`).join('');
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    // Update note count pill on toggle button
+    const toggle = document.getElementById(`notes-toggle-${id}`);
+    if (toggle) {
+      let pill = toggle.querySelector('.note-count-pill');
+      const count = (notesMap[id] || []).length;
+      if (!pill) {
+        pill = document.createElement('span');
+        pill.className = 'note-count-pill';
+        toggle.appendChild(pill);
+      }
+      pill.textContent = count;
+    }
+
+    setStatus('live');
+  } catch(e) {
+    // If notes table doesn't exist, show a helpful error
+    if (e.message.includes('42P01') || e.message.includes('does not exist')) {
+      alert('Notes table not found in Supabase. Run this SQL in your Supabase SQL editor:\n\nCREATE TABLE signal_issue_notes (\n  id SERIAL PRIMARY KEY,\n  issue_id INTEGER NOT NULL REFERENCES signal_issues(id) ON DELETE CASCADE,\n  author TEXT,\n  note_type TEXT DEFAULT \'comment\',\n  body TEXT NOT NULL,\n  created_at TIMESTAMPTZ DEFAULT NOW()\n);');
+    } else {
+      alert('Failed to save note: ' + e.message);
+    }
+    setStatus('error', e.message);
+  } finally {
+    if (btn) { btn.textContent = 'ADD NOTE'; btn.disabled = false; }
+  }
+}
+
+function toggleRetest(id, e) {
+  e.stopPropagation();
+  const kit    = document.getElementById(`retest-kit-${id}`);
+  const toggle = document.getElementById(`retest-toggle-${id}`);
+  const isOpen = kit.classList.contains('open');
+  kit.classList.toggle('open');
+  toggle.classList.toggle('open');
+  // Track open state so it survives re-renders
+  if (isOpen) openRetestKits.delete(id);
+  else openRetestKits.add(id);
+}
+
+function toggleNotes(id, e) {
+  e.stopPropagation();
+  const panel  = document.getElementById(`notes-panel-${id}`);
+  const toggle = document.getElementById(`notes-toggle-${id}`);
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open');
+  toggle.classList.toggle('open');
+  if (isOpen) openNotePanels.delete(id);
+  else openNotePanels.add(id);
+}
+
 function renderTriage() {
   const el = document.getElementById('triage-view');
-  if (!issues.length) {
-    el.innerHTML = '<div class="empty">NO ISSUES TO TRIAGE YET</div>';
-    return;
-  }
+  if (!issues.length) { el.innerHTML = '<div class="empty">NO ISSUES TO TRIAGE YET</div>'; return; }
 
-  // Group by category
   const byCategory = {};
-  issues.filter(i => !i.resolved).forEach(i => {
+  issues.filter(i => !i.resolved && (i.status||'open') !== 'closed').forEach(i => {
     if (!byCategory[i.category]) byCategory[i.category] = [];
     byCategory[i.category].push(i);
   });
 
-  // Priority order
   const catOrder = ['scoring','extraction','risk_flags','false_positive','false_negative','bullets','ui'];
   const catColors = {
     scoring: 'var(--purple)', extraction: 'var(--orange)', bullets: 'var(--green)',
@@ -818,9 +1491,9 @@ function renderTriage() {
           <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-left:auto">${items.length} issue${items.length!==1?'s':''}</span>
         </div>
         <div class="triage-body">
-          ${p1.length ? `<strong style="color:var(--red)">P1:</strong> ${p1.map(i => `<span title="${esc(i.concern)}">ISSUE-${String(i.id).padStart(3,'0')} ${esc(i.company)}/${esc(i.role)}</span>`).join(' · ')}<br>` : ''}
-          ${p2.length ? `<strong style="color:var(--amber)">P2:</strong> ${p2.map(i => `<span title="${esc(i.concern)}">ISSUE-${String(i.id).padStart(3,'0')} ${esc(i.company)}/${esc(i.role)}</span>`).join(' · ')}<br>` : ''}
-          ${p3.length ? `<strong style="color:var(--blue)">P3:</strong> ${p3.map(i => `<span title="${esc(i.concern)}">ISSUE-${String(i.id).padStart(3,'0')} ${esc(i.company)}/${esc(i.role)}</span>`).join(' · ')}<br>` : ''}
+          ${p1.length ? `<strong style="color:var(--red)">P1:</strong> ${p1.map(i => `<span title="${esc(i.concern)}">ISSUE-${String(i.id).padStart(3,'0')} [${(STATUS_LABELS[i.status||'open']||'Open')}]</span>`).join(' · ')}<br>` : ''}
+          ${p2.length ? `<strong style="color:var(--amber)">P2:</strong> ${p2.map(i => `<span title="${esc(i.concern)}">ISSUE-${String(i.id).padStart(3,'0')} [${(STATUS_LABELS[i.status||'open']||'Open')}]</span>`).join(' · ')}<br>` : ''}
+          ${p3.length ? `<strong style="color:var(--blue)">P3:</strong> ${p3.map(i => `<span title="${esc(i.concern)}">ISSUE-${String(i.id).padStart(3,'0')} [${(STATUS_LABELS[i.status||'open']||'Open')}]</span>`).join(' · ')}<br>` : ''}
         </div>
       </div>`;
   });
@@ -830,12 +1503,14 @@ function renderTriage() {
 
 function updateStats() {
   const open = issues.filter(i => !i.resolved);
-  document.getElementById('stat-total').textContent = open.length;
-  document.getElementById('stat-p1').textContent = open.filter(i => i.severity==='P1').length;
-  document.getElementById('stat-p2').textContent = open.filter(i => i.severity==='P2').length;
-  document.getElementById('stat-p3').textContent = open.filter(i => i.severity==='P3').length;
+  document.getElementById('stat-total').textContent    = open.length;
+  document.getElementById('stat-p1').textContent       = open.filter(i => i.severity==='P1').length;
+  document.getElementById('stat-p2').textContent       = open.filter(i => i.severity==='P2').length;
+  document.getElementById('stat-p3').textContent       = open.filter(i => i.severity==='P3').length;
+  document.getElementById('stat-ready').textContent    = open.filter(i => (i.status||'open')==='ready_to_test').length;
+  document.getElementById('stat-verified').textContent = open.filter(i => (i.status||'open')==='verified').length;
+  document.getElementById('stat-closed').textContent   = issues.filter(i => (i.status||'open')==='closed').length;
 
-  // filter counts
   document.getElementById('fc-all').textContent = issues.length;
   ['P1','P2','P3'].forEach(s => {
     document.getElementById(`fc-${s}`).textContent = issues.filter(i=>i.severity===s).length;
@@ -843,19 +1518,42 @@ function updateStats() {
   ['scoring','extraction','bullets','risk_flags','ui'].forEach(c => {
     document.getElementById(`fc-${c}`).textContent = issues.filter(i=>i.category===c).length;
   });
+  ['open','indev','ready_to_test','failed_retest','verified','closed'].forEach(s => {
+    const el = document.getElementById(`fc-${s}`);
+    if (el) el.textContent = issues.filter(i=>(i.status||'open')===s).length;
+  });
+
+  const testers = [...new Set(issues.map(i => i.tester).filter(Boolean))].sort();
+  const testerList = document.getElementById('tester-filter-list');
+  if (testerList) {
+    const activeTesterFilter = currentFilter.startsWith('tester:') ? currentFilter : 'tester:all';
+    let testerHTML = `<button class="filter-btn ${activeTesterFilter === 'tester:all' ? 'active' : ''}" data-filter="tester:all" onclick="setFilter('tester:all',this)">All testers <span class="count">${issues.length}</span></button>`;
+    testers.forEach(t => {
+      const count = issues.filter(i => i.tester === t).length;
+      const key = 'tester:' + t;
+      testerHTML += `<button class="filter-btn ${activeTesterFilter === key ? 'active' : ''}" data-filter="${key}" onclick="setFilter('${key}',this)">${esc(t)} <span class="count">${count}</span></button>`;
+    });
+    testerList.innerHTML = testerHTML;
+  }
 }
 
-// ── Interactions ──
 function toggleDetail(id) {
   const el = document.getElementById(`detail-${id}`);
   el.classList.toggle('open');
+  if (el.classList.contains('open')) openDetails.add(id);
+  else openDetails.delete(id);
 }
 
 function setFilter(f, btn) {
   currentFilter = f;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('view-label').textContent = f === 'all' ? 'ALL ISSUES' : f.toUpperCase();
+  let label = 'ALL ISSUES';
+  if (f === 'all') label = 'ALL ISSUES';
+  else if (f === 'tester:all') label = 'ALL TESTERS';
+  else if (f.startsWith('tester:')) label = f.replace('tester:','').toUpperCase() + ' — ISSUES';
+  else label = f.replace('status:','').toUpperCase().replace(/_/g,' ');
+  document.getElementById('view-label').textContent = label;
   render();
 }
 
@@ -870,23 +1568,23 @@ function setView(v) {
   render();
 }
 
-// ── Modal ──
 function openModal() {
   document.getElementById('modal').classList.add('open');
   document.getElementById('f-concern').focus();
 }
 function closeModal() {
   document.getElementById('modal').classList.remove('open');
-  ['concern','profile-json','job-desc','output-json'].forEach(f =>
-    document.getElementById(`f-${f}`).value = ''
-  );
+  ['concern','profile-json','job-desc','output-json','tester','test-account'].forEach(f => {
+    const el = document.getElementById(`f-${f}`);
+    if (el) el.value = '';
+  });
 }
 function handleOverlayClick(e) {
   if (e.target === document.getElementById('modal')) closeModal();
 }
 
 async function saveIssue() {
-  const concern = document.getElementById('f-concern').value.trim();
+  const concern    = document.getElementById('f-concern').value.trim();
   const outputJson = document.getElementById('f-output-json').value.trim();
   if (!concern) { alert('Concern is required.'); return; }
 
@@ -894,7 +1592,7 @@ async function saveIssue() {
   try {
     const parsed = JSON.parse(outputJson);
     score = `${parsed.decision || '?'} / ${parsed.score || '?'}`;
-    const internLine = parsed.job_signals?.internship?.evidence?.internshipLine || '';
+    const internLine   = parsed.job_signals?.internship?.evidence?.internshipLine || '';
     const inPersonLine = parsed.job_signals?.internship?.evidence?.inPersonLine || '';
     const roleHint = internLine || inPersonLine;
     if (roleHint) role = roleHint.slice(0, 80);
@@ -907,15 +1605,22 @@ async function saveIssue() {
     if (firstLine.length < 60) company = firstLine;
   }
 
+  const tester      = document.getElementById('f-tester').value.trim();
+  const testAccount = document.getElementById('f-test-account').value.trim();
+
   const row = {
     company, role, profile, score, concern,
     profile_json: document.getElementById('f-profile-json').value.trim(),
     job_desc: jobDesc,
     output_json: outputJson,
-    category: document.getElementById('f-category').value,
-    severity: document.getElementById('f-severity').value,
-    resolved: false,
-    root_cause: '',
+    category:     document.getElementById('f-category').value,
+    severity:     document.getElementById('f-severity').value,
+    status:       'open',
+    notes:        '',
+    tester:       tester || null,
+    test_account: testAccount || null,
+    resolved:     false,
+    root_cause:   '',
     claude_analysis: null,
   };
 
@@ -923,7 +1628,7 @@ async function saveIssue() {
   try {
     await sbFetch(TABLE, { method: 'POST', body: JSON.stringify(row) });
     closeModal();
-    await loadIssues();
+    await loadAll();
   } catch(e) {
     alert('Failed to save: ' + e.message);
     setStatus('error', e.message);
@@ -935,7 +1640,7 @@ async function deleteIssue(id) {
   setStatus('saving');
   try {
     await sbFetch(`${TABLE}?id=eq.${id}`, { method: 'DELETE' });
-    await loadIssues();
+    await loadAll();
   } catch(e) { alert('Failed to delete: ' + e.message); setStatus('error', e.message); }
 }
 
@@ -948,22 +1653,56 @@ async function toggleResolved(id) {
       method: 'PATCH',
       body: JSON.stringify({ resolved: !issue.resolved })
     });
-    await loadIssues();
+    await loadAll();
   } catch(e) { alert('Failed to update: ' + e.message); setStatus('error', e.message); }
 }
 
-// persist is now a no-op (Supabase handles it)
-function persist() {}
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'COPIED!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+  }).catch(() => { prompt('Copy:', text); });
+}
+
+function copyForRetest(id) {
+  const issue = issues.find(i => i.id === id);
+  if (!issue) return;
+  const text = [
+    'SIGNAL RETEST — ISSUE-' + String(issue.id).padStart(3,'0'),
+    'Logged by: ' + (issue.tester || '?'),
+    'Test account: ' + (issue.testAccount || '?'),
+    'Wrong score: ' + issue.score,
+    'Concern: ' + issue.concern,
+    '',
+    issue.jobDesc ? '── JOB DESCRIPTION ──\n' + issue.jobDesc : '',
+  ].filter(Boolean).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const btns = document.querySelectorAll(`#retest-kit-${id} .copy-btn`);
+    const btn = btns[btns.length - 1];
+    if (btn) { btn.textContent = 'COPIED!'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = 'COPY ALL'; btn.classList.remove('copied'); }, 1500); }
+  }).catch(() => { prompt('Copy:', text); });
+}
 
 function copyForClaude(id) {
   const issue = issues.find(i => i.id === id);
   if (!issue) return;
+  const noteList = notesMap[id] || [];
+  const notesText = noteList.length
+    ? '\n## NOTES LOG\n' + noteList.map(n =>
+        `[${n.note_type?.toUpperCase()||'COMMENT'}] ${n.author||'?'} — ${new Date(n.created_at).toLocaleDateString()}\n${n.body}`
+      ).join('\n\n')
+    : '';
+
   const text = [
     `SIGNAL ISSUE — ISSUE-${String(issue.id).padStart(3,'0')}`,
     `Job: ${issue.company} — ${issue.role}`,
     `Profile: ${issue.profile}`,
     `Score/Decision: ${issue.score}`,
+    `Status: ${STATUS_LABELS[issue.status||'open']}`,
     `My concern: ${issue.concern}`,
+    notesText,
     '',
     issue.profileJson ? `## PROFILE JSON\n${issue.profileJson}` : '',
     '',
@@ -973,62 +1712,31 @@ function copyForClaude(id) {
   ].filter(l => l !== undefined).join('\n');
 
   navigator.clipboard.writeText(text).then(() => {
-    // Flash the button
     const btn = document.querySelector(`#detail-${id} .btn-save`);
     if (btn) { btn.textContent = 'COPIED!'; setTimeout(() => btn.textContent = 'COPY FOR CLAUDE', 1500); }
-  }).catch(() => {
-    // Fallback: show in alert
-    prompt('Copy this and paste to Claude:', text);
-  });
+  }).catch(() => { prompt('Copy this and paste to Claude:', text); });
 }
 
 function exportLog() {
   const lines = ['# SIGNAL Issue Log\n', `Exported: ${new Date().toLocaleString()}\n`, '---\n'];
   issues.forEach(i => {
-    lines.push(`## ISSUE-${String(i.id).padStart(3,'0')} [${i.severity}] [${i.category}]${i.resolved?' [RESOLVED]':''}`);
+    const statusLabel = STATUS_LABELS[i.status||'open'] || i.status;
+    lines.push(`## ISSUE-${String(i.id).padStart(3,'0')} [${i.severity}] [${i.category}] [${statusLabel}]${i.resolved?' [RESOLVED]':''}`);
     lines.push(`**Job:** ${i.company} — ${i.role}`);
     lines.push(`**Profile:** ${i.profile}`);
     lines.push(`**Score:** ${i.score}`);
     lines.push(`**Concern:** ${i.concern}`);
+    if (i.notes) lines.push(`**Notes:** ${i.notes}`);
     if (i.root) lines.push(`**Root Cause:** ${i.root}`);
-    if (i.claudeAnalysis) {
-      lines.push(`**Claude Analysis:**`);
-      lines.push('```json');
-      lines.push(JSON.stringify(i.claudeAnalysis, null, 2));
-      lines.push('```');
+    const noteList = notesMap[i.id] || [];
+    if (noteList.length) {
+      lines.push('**Note Thread:**');
+      noteList.forEach(n => {
+        lines.push(`  [${n.note_type?.toUpperCase()||'COMMENT'}] ${n.author||'?'} — ${new Date(n.created_at).toLocaleDateString()}: ${n.body}`);
+      });
     }
     lines.push(`**Logged:** ${i.time}`);
     lines.push('');
-    if (i.outputJson) {
-      lines.push('### Full JobFit Output');
-      lines.push('```json');
-      try {
-        lines.push(JSON.stringify(JSON.parse(i.outputJson), null, 2));
-      } catch(e) {
-        lines.push(i.outputJson);
-      }
-      lines.push('```');
-      lines.push('');
-    }
-    if (i.jobDesc) {
-      lines.push('### Full Job Description');
-      lines.push('```');
-      lines.push(i.jobDesc);
-      lines.push('```');
-      lines.push('');
-    }
-    if (i.profileJson) {
-      lines.push('### Full Profile Data');
-      lines.push('```json');
-      try {
-        lines.push(JSON.stringify(JSON.parse(i.profileJson), null, 2));
-      } catch(e) {
-        lines.push(i.profileJson);
-      }
-      lines.push('```');
-      lines.push('');
-    }
-    lines.push('---\n');
   });
   const blob = new Blob([lines.join('\n')], {type:'text/markdown'});
   const a = document.createElement('a');
@@ -1045,7 +1753,6 @@ function esc(str) {
     .replace(/"/g,'&quot;');
 }
 
-// init flex for list
 document.getElementById('issue-list').style.display = 'flex';
 document.getElementById('issue-list').style.flexDirection = 'column';
 document.getElementById('issue-list').style.gap = '10px';
