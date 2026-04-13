@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1384,8 +1385,6 @@ async function migrateAndSeed(){
 
   // 2. Seed mobile test cases if none exist
   const mobileExists=cases.some(c=>c.platform==='Mobile');
-  if(mobileExists)return;
-
   const mobileCases=[
     // MOBILE LANDING
     {platform:'Mobile',surface:'Mobile — Landing',test_type:'UI',priority:'Critical',title:'App launch → marketing screen for new users',steps:'1. Delete app data / first install\n2. Launch app',expected_result:'Marketing landing screen shown — not login, not dashboard'},
@@ -1948,10 +1947,12 @@ async function migrateAndSeed(){
     console.log('Seeded',resumeRxCases.length,'Resume Rx test cases');
   }
 
-  for(const c of mobileCases){
-    await sb('qa_test_cases',{method:'POST',body:JSON.stringify({...c,active:true})});
+  if(!mobileExists){
+    for(const c of mobileCases){
+      await sb('qa_test_cases',{method:'POST',body:JSON.stringify({...c,active:true})});
+    }
+    console.log('Seeded',mobileCases.length,'mobile test cases');
   }
-  console.log('Seeded',mobileCases.length,'mobile test cases');
 }
 
 // Auto-seed after initial load
