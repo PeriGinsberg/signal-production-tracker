@@ -637,6 +637,9 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
         <option>Resume Rx — Entry</option><option>Resume Rx — Diagnosis</option>
         <option>Resume Rx — Education</option><option>Resume Rx — Architecture</option>
         <option>Resume Rx — Q&A</option><option>Resume Rx — PDF & Delivery</option>
+        <option>Coaches Center — Portfolio</option><option>Coaches Center — Client View</option>
+        <option>Coaches Center — Source a Job</option><option>Coaches Center — Annotations</option>
+        <option>Coaches Center — Client Tracker</option>
         <option>Mobile — Landing</option><option>Mobile — Login</option>
         <option>Mobile — JobFit</option><option>Mobile — Tracker</option><option>Mobile — Profile</option>
         <option>Mobile — Splash</option>
@@ -681,10 +684,10 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
 const SB='https://ejhnokcnahauvrcbcmic.supabase.co';
 const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqaG5va2NuYWhhdXZyY2JjbWljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxMzczNzMsImV4cCI6MjA4MzcxMzM3M30.LzTMZDzDrx4UMWGu9y5qeg4AzwxukEWUu06q7Ts9Wb0';
 
-const WEB_SURFACES=['Landing Page','Free Job Analysis','Auth Flow','Stripe & Checkout','Dashboard','JobFit','Positioning','Cover Letter','Networking','Job Tracker','Job URL Parser','Resume Rx — Entry','Resume Rx — Diagnosis','Resume Rx — Education','Resume Rx — Architecture','Resume Rx — Q&A','Resume Rx — PDF & Delivery'];
+const WEB_SURFACES=['Landing Page','Free Job Analysis','Auth Flow','Stripe & Checkout','Dashboard','JobFit','Positioning','Cover Letter','Networking','Job Tracker','Job URL Parser','Resume Rx — Entry','Resume Rx — Diagnosis','Resume Rx — Education','Resume Rx — Architecture','Resume Rx — Q&A','Resume Rx — PDF & Delivery','Coaches Center — Portfolio','Coaches Center — Client View','Coaches Center — Source a Job','Coaches Center — Annotations','Coaches Center — Client Tracker'];
 const MOBILE_SURFACES=['Mobile — Landing','Mobile — Login','Mobile — JobFit','Mobile — Positioning','Mobile — Cover Letter','Mobile — Networking','Mobile — Tracker','Mobile — Profile','Mobile — Splash / Onboarding'];
 const ALL_SURFACES=[...WEB_SURFACES,...MOBILE_SURFACES];
-const SURF_COLORS={'Landing Page':'#FEB06A','Free Job Analysis':'#2DD4BF','Auth Flow':'#7B5CF6','Stripe & Checkout':'#4ADE80','Dashboard':'#51ADE5','JobFit':'#FF4F6D','Positioning':'#8B7FE8','Cover Letter':'#F472B6','Networking':'#FB923C','Job Tracker':'#34D399','Job URL Parser':'#A78BFA','Resume Rx — Entry':'#FF6CE5','Resume Rx — Diagnosis':'#FF3B5C','Resume Rx — Education':'#4DB8FF','Resume Rx — Architecture':'#FFD60A','Resume Rx — Q&A':'#00F5D4','Resume Rx — PDF & Delivery':'#30D158','Mobile — Landing':'#FEB06A','Mobile — Login':'#7B5CF6','Mobile — JobFit':'#FF4F6D','Mobile — Positioning':'#8B7FE8','Mobile — Cover Letter':'#F472B6','Mobile — Networking':'#FB923C','Mobile — Tracker':'#34D399','Mobile — Profile':'#51ADE5','Mobile — Splash / Onboarding':'#2DD4BF'};
+const SURF_COLORS={'Landing Page':'#FEB06A','Free Job Analysis':'#2DD4BF','Auth Flow':'#7B5CF6','Stripe & Checkout':'#4ADE80','Dashboard':'#51ADE5','JobFit':'#FF4F6D','Positioning':'#8B7FE8','Cover Letter':'#F472B6','Networking':'#FB923C','Job Tracker':'#34D399','Job URL Parser':'#A78BFA','Resume Rx — Entry':'#FF6CE5','Resume Rx — Diagnosis':'#FF3B5C','Resume Rx — Education':'#4DB8FF','Resume Rx — Architecture':'#FFD60A','Resume Rx — Q&A':'#00F5D4','Resume Rx — PDF & Delivery':'#30D158','Coaches Center — Portfolio':'#BF5AF2','Coaches Center — Client View':'#9B59B6','Coaches Center — Source a Job':'#FF6B35','Coaches Center — Annotations':'#FFD60A','Coaches Center — Client Tracker':'#00C7BE','Mobile — Landing':'#FEB06A','Mobile — Login':'#7B5CF6','Mobile — JobFit':'#FF4F6D','Mobile — Positioning':'#8B7FE8','Mobile — Cover Letter':'#F472B6','Mobile — Networking':'#FB923C','Mobile — Tracker':'#34D399','Mobile — Profile':'#51ADE5','Mobile — Splash / Onboarding':'#2DD4BF'};
 const TYPES=['UI','API','Functional','Integration','Data'];
 const PRIORITIES=['Critical','High','Medium','Low'];
 
@@ -1979,6 +1982,448 @@ async function migrateAndSeed(){
       await sb('qa_test_cases',{method:'POST',body:JSON.stringify({...c,active:true})});
     }
     console.log('Seeded',resumeRxCases.length,'Resume Rx test cases');
+  }
+
+  // Coaches Center test cases
+  const coachesExists=cases.some(c=>c.surface==='Coaches Center — Portfolio');
+  if(!coachesExists){
+    const coachesCases=[
+
+      // ─── PORTFOLIO ───
+      {platform:'Web',surface:'Coaches Center — Portfolio',test_type:'UI',priority:'Critical',
+       title:'"My Clients" nav item only visible when is_coach = true',
+       steps:'1. Log in as a non-coach account\n2. Check dashboard nav',
+       expected_result:'"My Clients" nav item does not appear for regular users. Only visible when the account has is_coach = true.'},
+
+      {platform:'Web',surface:'Coaches Center — Portfolio',test_type:'UI',priority:'Critical',
+       title:'Portfolio page shows all active clients as cards',
+       steps:'1. Log in as coach\n2. Navigate to My Clients',
+       expected_result:'One card per active client. Each card shows client name, status badge, stats row, last activity, and action buttons.'},
+
+      {platform:'Web',surface:'Coaches Center — Portfolio',test_type:'Functional',priority:'Critical',
+       title:'Client stats show correct numbers — not all zeros',
+       steps:'1. View a client card with known applications\n2. Check Applications, Interviewing, Pending Recs, Interview Rate',
+       expected_result:'Stats reflect real data from the client\'s profile. Not all zeros. Interview rate calculated correctly (interviewing / applied * 100).'},
+
+      {platform:'Web',surface:'Coaches Center — Portfolio',test_type:'Functional',priority:'High',
+       title:'Needs attention flag shows for clients with pending recommendations',
+       steps:'1. Send a job recommendation to a client\n2. Client does not respond\n3. View coach portfolio',
+       expected_result:'Client card shows "needs attention" badge. Card sorted to top of list.'},
+
+      {platform:'Web',surface:'Coaches Center — Portfolio',test_type:'Functional',priority:'High',
+       title:'Needs attention flag shows for inactive clients (7+ days)',
+       steps:'1. Have a client with no activity for 7+ days\n2. View portfolio',
+       expected_result:'Client card shows "needs attention" badge. Last active date shown in coral/red color.'},
+
+      {platform:'Web',surface:'Coaches Center — Portfolio',test_type:'Functional',priority:'High',
+       title:'Cards sorted by needs attention then last activity',
+       steps:'1. Have mix of active and inactive clients\n2. View portfolio',
+       expected_result:'Clients needing attention appear first. Within each group, most recently active appears first.'},
+
+      {platform:'Web',surface:'Coaches Center — Portfolio',test_type:'UI',priority:'High',
+       title:'Card left border color reflects client status',
+       steps:'1. View portfolio with various client states',
+       expected_result:'Red border: needs attention + inactive 7+ days. Orange border: pending recs. Green border: recently active. Dim: no activity.'},
+
+      {platform:'Web',surface:'Coaches Center — Portfolio',test_type:'UI',priority:'High',
+       title:'"Open Dashboard →" button opens client context view',
+       steps:'1. Click "Open Dashboard →" on a client card',
+       expected_result:'Navigates to /dashboard/coach/clients/[clientId] — Job Tracker tab active by default. Context banner shows client name.'},
+
+      {platform:'Web',surface:'Coaches Center — Portfolio',test_type:'UI',priority:'High',
+       title:'"Add Job +" shortcut opens Source a Job for that client',
+       steps:'1. Click "Add Job +" on a client card',
+       expected_result:'Navigates to client view with Source a Job tab active and ready for job entry.'},
+
+      {platform:'Web',surface:'Coaches Center — Portfolio',test_type:'Integration',priority:'Critical',
+       title:'Invite existing client — pending invite appears',
+       steps:'1. Click "+ Invite Client"\n2. Enter email of existing SIGNAL user\n3. Submit',
+       expected_result:'Invite sent confirmation shown. Client card appears in portfolio with "Pending" status badge.'},
+
+      {platform:'Web',surface:'Coaches Center — Portfolio',test_type:'Integration',priority:'Critical',
+       title:'Invite new client — creates account and sends magic link',
+       steps:'1. Click "+ Invite Client"\n2. Enter email not in SIGNAL\n3. Submit',
+       expected_result:'New account created. Invite email sent with magic link. Card appears as Pending. Scenario B message shown.'},
+
+      {platform:'Web',surface:'Coaches Center — Portfolio',test_type:'Integration',priority:'Critical',
+       title:'Client accepts invite — status changes to Active',
+       steps:'1. Send invite to existing client\n2. Client navigates to accept URL\n3. Client accepts\n4. Refresh portfolio',
+       expected_result:'Client card status changes from Pending to Active. accepted_at timestamp recorded.'},
+
+      {platform:'Web',surface:'Coaches Center — Portfolio',test_type:'UI',priority:'Medium',
+       title:'Invite modal shows access level options',
+       steps:'1. Click "+ Invite Client"\n2. View modal',
+       expected_result:'Radio options: View Only, Annotate, Full Access. Full Access pre-selected. Each option has description.'},
+
+      {platform:'Web',surface:'Coaches Center — Portfolio',test_type:'UI',priority:'Medium',
+       title:'Pending clients shown separately from active clients',
+       steps:'1. Have mix of pending and active clients\n2. View portfolio',
+       expected_result:'Pending clients display with distinct "Pending" status badge. Active clients show green "Active" badge.'},
+
+      // ─── CLIENT VIEW ───
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'UI',priority:'Critical',
+       title:'Context banner shows correct client name — not "Client"',
+       steps:'1. Open any client\'s dashboard\n2. Check the sticky banner at top',
+       expected_result:'Banner shows actual client name (e.g. "Coaching: Jacob Kanterman") not the generic word "Client".'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'UI',priority:'Critical',
+       title:'Context banner shows client email in dim text',
+       steps:'1. Open client dashboard\n2. Check banner',
+       expected_result:'Client email visible in small dim text below the client name.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'UI',priority:'Critical',
+       title:'"← Back to My Clients" returns to portfolio',
+       steps:'1. Open client dashboard\n2. Click "← Back to My Clients"',
+       expected_result:'Navigates back to /dashboard/coach — portfolio view. No new tab opened.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'UI',priority:'High',
+       title:'Four tabs present: Job Tracker, Source a Job, Analyses History, Profile & Personas',
+       steps:'1. Open any client dashboard',
+       expected_result:'All four tabs visible. Job Tracker is active by default.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'UI',priority:'High',
+       title:'Job Tracker tab shows "From You" section and "Their Applications" section',
+       steps:'1. Open client dashboard\n2. View Job Tracker tab',
+       expected_result:'Two distinct sections: "From You — Coach Recommendations" at top, "Their Applications" below.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'Functional',priority:'Critical',
+       title:'Recommendation cards show company name and job title',
+       steps:'1. Send a job to a client\n2. View the recommendation in coach client view',
+       expected_result:'Company name bold and prominent. Job title visible below. Not showing "—" or blank.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'Functional',priority:'Critical',
+       title:'Recommendation cards show SIGNAL score and verdict',
+       steps:'1. View a coach recommendation card',
+       expected_result:'Score (0-100) and verdict badge (Priority Apply/Apply/Review/Pass) visible with correct colors.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'Functional',priority:'Critical',
+       title:'Recommendation cards show sent date and priority pill',
+       steps:'1. View a recommendation card',
+       expected_result:'Shows "Sent [Day, Month Date, Year]" and a small priority pill (Urgent/This Week/When Ready/For Awareness).'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'Functional',priority:'High',
+       title:'Client response status shows human-readable chip — not raw text',
+       steps:'1. View recommendation with client_status = "new"',
+       expected_result:'Shows "👀 Not yet viewed" chip — NOT the raw text "new". Other statuses also show human-readable labels.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'Functional',priority:'High',
+       title:'Coaching note visible on recommendation card with orange border',
+       steps:'1. View a recommendation that has a coaching note',
+       expected_result:'Note text shown in italic with orange left border. "— [Coach Name]" attribution at bottom right.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'UI',priority:'High',
+       title:'"Edit Note" opens inline edit form',
+       steps:'1. Click "Edit Note" on a recommendation card',
+       expected_result:'Inline textarea appears with current note pre-filled. Save and Cancel buttons visible.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'Integration',priority:'High',
+       title:'"Edit Note" save updates the note without page reload',
+       steps:'1. Edit a coaching note\n2. Click Save',
+       expected_result:'Note updates immediately on the card. No full page reload. PATCH call made to API.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'UI',priority:'High',
+       title:'"Delete note" shows confirm prompt before deleting',
+       steps:'1. Click "Delete note" on a recommendation card',
+       expected_result:'"Sure? Yes, delete | Cancel" inline confirm appears. Nothing deleted until confirmed.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'Integration',priority:'High',
+       title:'"Delete note" confirmed — note clears from card instantly',
+       steps:'1. Click "Delete note"\n2. Click "Yes, delete"',
+       expected_result:'Coaching note disappears from card immediately. No page reload. coaching_note set to empty string in DB.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'UI',priority:'High',
+       title:'"Change Priority" updates priority on card',
+       steps:'1. Click "Change Priority" on a recommendation\n2. Select a different priority',
+       expected_result:'Priority pill updates immediately. Sent date row reflects new priority.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'UI',priority:'High',
+       title:'"Remove" shows confirm dialog with client name',
+       steps:'1. Click "Remove" on a recommendation card',
+       expected_result:'Dialog: "Remove this job from [client name]\'s dashboard?" with confirm and cancel buttons.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'Integration',priority:'High',
+       title:'"Remove" confirmed — card disappears from coach view and client tracker',
+       steps:'1. Confirm remove on a recommendation\n2. Check client tracker',
+       expected_result:'Card removed from coach view. Job no longer appears in client\'s "From Your Coach" section.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'Functional',priority:'High',
+       title:'Their Applications section shows all client applications with correct data',
+       steps:'1. View Job Tracker tab\n2. Check Their Applications section',
+       expected_result:'All client applications listed with company name, job title, status badge, SIGNAL score, and verdict. Not blank cards.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'UI',priority:'High',
+       title:'Application card expands on click to show detail panel',
+       steps:'1. Click on an application card in Their Applications',
+       expected_result:'Detail panel opens below the card header showing job URL (if any), score, status, date added, and existing annotations.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'UI',priority:'High',
+       title:'Job URL in expanded application is a clickable link',
+       steps:'1. Expand an application that has a job URL saved',
+       expected_result:'"View Posting →" link visible. Opens job URL in new tab.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'UI',priority:'Medium',
+       title:'Analyses History tab shows client\'s JobFit run history',
+       steps:'1. Click Analyses History tab',
+       expected_result:'List of past JobFit runs with date, company, role, score, decision, and persona used. Coach-sourced runs show badge.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'UI',priority:'Medium',
+       title:'Profile & Personas tab shows read-only client profile',
+       steps:'1. Click Profile & Personas tab',
+       expected_result:'Client profile fields visible (read-only). All personas shown with resume preview.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'UI',priority:'Medium',
+       title:'Private notes slide-out opens from context banner',
+       steps:'1. Click Notes button in context banner',
+       expected_result:'Slide-out panel opens with private notes textarea. Notes are not visible to client.'},
+
+      {platform:'Web',surface:'Coaches Center — Client View',test_type:'Data',priority:'Medium',
+       title:'Private notes save and persist across sessions',
+       steps:'1. Enter private notes\n2. Save\n3. Navigate away and return',
+       expected_result:'Notes still present on return. Saved to coach_clients.private_notes.'},
+
+      // ─── SOURCE A JOB ───
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'UI',priority:'Critical',
+       title:'4-step workflow visible in correct sequence',
+       steps:'1. Click Source a Job tab',
+       expected_result:'Step indicators visible at top: ① Job Details → ② Run Analysis → ③ Review Results → ④ Send to Client. Step 1 active.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'UI',priority:'Critical',
+       title:'Persona selector only appears after job description has content',
+       steps:'1. Open Source a Job\n2. Leave JD empty — check persona selector\n3. Enter 50+ chars of JD — check again',
+       expected_result:'Persona selector hidden when JD is empty. Appears only after JD has content (>50 chars).'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'UI',priority:'Critical',
+       title:'Run Analysis button only enabled when persona selected AND JD present',
+       steps:'1. Have JD filled but no persona selected\n2. Check button\n3. Select persona — check again',
+       expected_result:'Button disabled without persona. Enabled only when both JD and persona are present.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'Integration',priority:'Critical',
+       title:'URL fetch populates company, title, and JD fields',
+       steps:'1. Paste an Indeed job URL\n2. Click Fetch',
+       expected_result:'Company name, job title, and full job description auto-filled. Loading state shown during fetch.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'Integration',priority:'Critical',
+       title:'Run SIGNAL Analysis runs full JobFit against client persona',
+       steps:'1. Enter job details\n2. Select client persona\n3. Click Run SIGNAL Analysis',
+       expected_result:'Full JobFit runs against the CLIENT\'s resume — not the coach\'s. Score and verdict appear. WHY codes and RISK codes shown in human-readable format.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'Functional',priority:'Critical',
+       title:'Analysis result uses client profile — not coach profile',
+       steps:'1. Run analysis for a client\n2. Note the score\n3. Log in as client and run same job\n4. Compare scores',
+       expected_result:'Scores match within ±2 points. Analysis was run against client\'s resume and profile, not coach\'s.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'UI',priority:'Critical',
+       title:'Step 3 button reads "Add Coaching Note & Send →" — not "Send to Dashboard"',
+       steps:'1. Run analysis\n2. View Step 3 results',
+       expected_result:'Primary action button says "Add Coaching Note & Send →". NOT "Send to Dashboard". Discard link also visible.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'UI',priority:'Critical',
+       title:'Step 4 annotation form only appears after clicking "Add Coaching Note & Send →"',
+       steps:'1. Run analysis\n2. Do NOT click the button — verify Step 4 is hidden\n3. Click the button',
+       expected_result:'Coaching annotation form hidden until coach clicks the Step 3 button. Appears inline below results on click.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'Functional',priority:'Critical',
+       title:'Priority pre-selected based on SIGNAL verdict',
+       steps:'1. Run analysis that returns "Apply" verdict\n2. View Step 4 annotation',
+       expected_result:'Priority pre-selected: Priority Apply → Urgent, Apply → This Week, Review → When Ready, Pass → Not Recommended. Coach can override.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'Functional',priority:'Critical',
+       title:'Coaching note pre-populated with smart default based on verdict',
+       steps:'1. Run analysis\n2. View coaching note field in Step 4',
+       expected_result:'Note pre-filled with verdict-appropriate default text. Coach can edit before sending.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'UI',priority:'Critical',
+       title:'Final "Send to Dashboard ✓" button disabled until coaching note has 20+ chars',
+       steps:'1. Clear the coaching note\n2. Check send button\n3. Type 20+ chars\n4. Check again',
+       expected_result:'Button disabled with empty or short note. Enables only when note meets minimum length.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'Integration',priority:'Critical',
+       title:'Send to Dashboard delivers job to client tracker',
+       steps:'1. Complete full 4-step flow\n2. Click Send to Dashboard ✓\n3. Log in as client and check tracker',
+       expected_result:'Job appears in client\'s tracker with coach badge, coaching note, priority indicator, and action buttons.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'Integration',priority:'Critical',
+       title:'After send — redirects to client Job Tracker tab after 1.5 seconds',
+       steps:'1. Click Send to Dashboard ✓\n2. Watch behavior',
+       expected_result:'Green success banner appears. After 1.5 seconds, automatically redirects to client\'s Job Tracker tab in the coach view. Recommendation visible in "From You" section.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'UI',priority:'High',
+       title:'"Discard" clears entire form and returns to Step 1',
+       steps:'1. Run analysis (Step 3 visible)\n2. Click Discard',
+       expected_result:'All fields cleared. Form returns to empty Step 1 state. No data saved.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'Functional',priority:'High',
+       title:'PASS verdict shows dim "Score suggests low fit. Send anyway?" flag',
+       steps:'1. Run analysis that returns Pass verdict\n2. View Step 3',
+       expected_result:'Dim advisory text shows below results. Does NOT block sending — coach can still send a Pass job if they choose.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'Integration',priority:'High',
+       title:'LinkedIn URL shows helper UI and opens job in new tab',
+       steps:'1. Paste LinkedIn job URL\n2. Click Fetch',
+       expected_result:'LinkedIn helper UI appears with amber styling. Job URL opens in new tab automatically. Paste helper textarea shown.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'UI',priority:'High',
+       title:'Analysis WHY codes render in human-readable format — not raw codes',
+       steps:'1. Run analysis with WHY codes in result\n2. View Step 3',
+       expected_result:'WHY section shows "Why You Are Competitive" header with green checkmarks and full explanatory sentences. Not raw codes like "operations_execution".'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'UI',priority:'High',
+       title:'Analysis RISK codes render in human-readable format — not raw codes',
+       steps:'1. Run analysis with RISK codes\n2. View Step 3',
+       expected_result:'RISK section shows "Your Risks" header with red exclamation icons and full explanatory sentences. Not raw codes like "RISK_LOCATION_UNCLEAR".'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'Data',priority:'High',
+       title:'JobFit run saved with client profile_id — not coach profile_id',
+       steps:'1. Run analysis for client\n2. Check jobfit_runs table in Supabase',
+       expected_result:'New jobfit_runs row has profile_id matching the CLIENT\'s profile — not the coach\'s. sourced_by_coach_id populated with coach\'s profile_id.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'Data',priority:'High',
+       title:'Full analysis result stored in coach_job_recommendations.full_analysis',
+       steps:'1. Send a job to client\n2. Check coach_job_recommendations in Supabase',
+       expected_result:'full_analysis JSONB column populated with complete JobFit result including why_codes, risk_codes, and reasoning.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'UI',priority:'Medium',
+       title:'Step indicator updates as workflow progresses',
+       steps:'1. Start Source a Job\n2. Progress through each step',
+       expected_result:'Current step shown with filled orange circle. Completed steps show checkmark. Upcoming steps dim.'},
+
+      {platform:'Web',surface:'Coaches Center — Source a Job',test_type:'UI',priority:'Medium',
+       title:'Loading state shows during analysis with client persona name',
+       steps:'1. Click Run SIGNAL Analysis\n2. Observe immediately',
+       expected_result:'"Running analysis against [persona name]..." shown with progress indicator. Button disabled during analysis.'},
+
+      // ─── ANNOTATIONS ───
+      {platform:'Web',surface:'Coaches Center — Annotations',test_type:'Integration',priority:'Critical',
+       title:'Add coaching note on application — saves and appears on card',
+       steps:'1. Expand an application card\n2. Click "Add coaching note"\n3. Enter note with priority\n4. Click Save Note',
+       expected_result:'Note saved to coach_annotations. Appears on the card in expanded view with priority badge and coach attribution.'},
+
+      {platform:'Web',surface:'Coaches Center — Annotations',test_type:'Integration',priority:'Critical',
+       title:'Coaching note visible to client on their application',
+       steps:'1. Add a visible note on a client application\n2. Log in as client\n3. View that application',
+       expected_result:'Note appears on the client\'s application card with orange left border and "— [Coach Name]" attribution.'},
+
+      {platform:'Web',surface:'Coaches Center — Annotations',test_type:'Functional',priority:'High',
+       title:'Priority badge renders correct color on annotation',
+       steps:'1. Add note with "Urgent" priority\n2. View annotation',
+       expected_result:'Urgent = red badge. Important = orange. Info = blue. Positive = green.'},
+
+      {platform:'Web',surface:'Coaches Center — Annotations',test_type:'Functional',priority:'High',
+       title:'Private annotation (visible_to_client = false) not shown to client',
+       steps:'1. Add annotation with "Visible to client" toggled OFF\n2. Log in as client',
+       expected_result:'Annotation does not appear anywhere in client\'s view. Only visible to coach.'},
+
+      {platform:'Web',surface:'Coaches Center — Annotations',test_type:'UI',priority:'High',
+       title:'Add note form has priority selector and visible toggle',
+       steps:'1. Click "Add coaching note" on an application',
+       expected_result:'Form shows: textarea, 4 priority pill buttons (Urgent/Important/Info/Positive), "Visible to client" toggle (default on), Submit button.'},
+
+      {platform:'Web',surface:'Coaches Center — Annotations',test_type:'Data',priority:'High',
+       title:'Annotation saved to coach_annotations with correct target_id',
+       steps:'1. Add note to a specific application\n2. Check coach_annotations in Supabase',
+       expected_result:'Row has target_type="application", target_id matching the application id, not application_id column (which does not exist).'},
+
+      {platform:'Web',surface:'Coaches Center — Annotations',test_type:'UI',priority:'Medium',
+       title:'Multiple annotations stack on an application card',
+       steps:'1. Add 3 annotations to same application\n2. View expanded card',
+       expected_result:'All 3 annotations visible in the expanded panel, ordered by date. Each attributed separately.'},
+
+      // ─── CLIENT TRACKER (client-side view of coach recommendations) ───
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'UI',priority:'Critical',
+       title:'Notification banner appears when coach adds new jobs',
+       steps:'1. Coach sends a job recommendation\n2. Log in as client\n3. View tracker',
+       expected_result:'Orange-bordered banner at top: "[Coach Name] added [N] job(s) to your tracker". "View coach jobs →" and dismiss button visible.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'UI',priority:'Critical',
+       title:'"From Your Coach" callout section visible above application list',
+       steps:'1. Have pending coach recommendations\n2. View client tracker',
+       expected_result:'Section header with ⚡ icon: "[Coach Name] added [N] job(s) to your tracker — review below". Dim subtext explains the ⚡ badge.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'UI',priority:'Critical',
+       title:'Coach-sourced jobs show "⚡ From [Coach Name]" badge on application row',
+       steps:'1. View a coach-sourced job in client tracker',
+       expected_result:'Teal pill badge "⚡ From [Coach Name]" visible on the application row. Distinct from self-added jobs.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'UI',priority:'Critical',
+       title:'Coaching note visible on coach-sourced application row',
+       steps:'1. View coach-sourced job that has a coaching note\n2. Check below job title',
+       expected_result:'Coaching note shown with orange left border and italic text. "— [Coach Name]" attribution. Expandable/collapsible.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'UI',priority:'Critical',
+       title:'Priority left border color correct on coach-sourced rows',
+       steps:'1. View coach-sourced jobs with different priorities',
+       expected_result:'Urgent = red left border. This Week = orange. When Ready = blue. Not Recommended = dim.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'UI',priority:'Critical',
+       title:'"✓ I\'ll Apply" and "✗ Not for me" action buttons visible on new recommendations',
+       steps:'1. View a coach recommendation with client_status = "new"',
+       expected_result:'Two action buttons visible: green "✓ I\'ll Apply" and dim "✗ Not for me". "View full SIGNAL analysis →" link also present.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'Integration',priority:'Critical',
+       title:'"✓ I\'ll Apply" updates status and replaces buttons with confirmation',
+       steps:'1. Click "✓ I\'ll Apply" on a coach recommendation',
+       expected_result:'client_status updated to "applying". Buttons replaced with "✓ You said you\'ll apply" in green. "Change" link visible to undo.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'Integration',priority:'Critical',
+       title:'"✗ Not for me" collapses card and updates status',
+       steps:'1. Click "✗ Not for me" on a coach recommendation',
+       expected_result:'client_status updated to "not_for_me". Card dims/collapses. Coach can see status change in their view.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'Integration',priority:'High',
+       title:'Client response visible to coach in their client view',
+       steps:'1. Client clicks "✓ I\'ll Apply"\n2. Coach opens client Job Tracker tab',
+       expected_result:'Recommendation card shows "📝 Applying" status chip. client_responded_at timestamp recorded.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'UI',priority:'High',
+       title:'Dismiss banner calls mark-seen and hides on next load',
+       steps:'1. View notification banner\n2. Click × to dismiss\n3. Navigate away and return',
+       expected_result:'Banner dismissed immediately. Does not reappear on next visit. mark-seen API called.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'Functional',priority:'High',
+       title:'Banner auto-marks seen after 3 seconds of viewing',
+       steps:'1. View tracker with new recommendations\n2. Wait 3 seconds\n3. Navigate away and return',
+       expected_result:'Banner does not reappear on return. Recommendations marked as seen automatically after 3 seconds.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'UI',priority:'High',
+       title:'"View full SIGNAL analysis →" expands complete JobFit result',
+       steps:'1. Click "View full SIGNAL analysis →" on a coach recommendation',
+       expected_result:'Full analysis expands inline: verdict, score, WHY section with green checkmarks, RISK section with red warnings, full reasoning text.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'Functional',priority:'High',
+       title:'Apply-by date shown with correct urgency color',
+       steps:'1. Coach sets apply-by date to today\n2. Client views recommendation',
+       expected_result:'Apply-by date shown in red "⚠ Due today". Future date shows in dim. Past date shows "⚠ Overdue" in red.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'UI',priority:'Medium',
+       title:'"Not for me" jobs shown as collapsed dim row — not hidden',
+       steps:'1. Client clicks "Not for me" on a recommendation\n2. View tracker',
+       expected_result:'Job appears as single dim collapsed row with company name and "Client passed" label. "▶ Show" toggle to expand.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'UI',priority:'Medium',
+       title:'Accept invite page shows coach name and org on success',
+       steps:'1. Navigate to /dashboard/accept-invite?token=[valid token]',
+       expected_result:'Success state shows "[Coach Name] from [coach_org] is now connected to your SIGNAL account." with link to dashboard.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'UI',priority:'Medium',
+       title:'Accept invite page shows error for invalid or used token',
+       steps:'1. Navigate to /dashboard/accept-invite?token=fakeinvalidtoken',
+       expected_result:'"This invite link has expired or already been used." error shown. Link to dashboard.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'UI',priority:'Medium',
+       title:'Coach access visible in client settings with revoke option',
+       steps:'1. Log in as client with active coach connection\n2. View settings/dashboard',
+       expected_result:'Coach name, org, access level, and connected date shown. "Revoke access" button present.'},
+
+      {platform:'Web',surface:'Coaches Center — Client Tracker',test_type:'Integration',priority:'Medium',
+       title:'Revoke access removes coach from client settings and blocks coach view',
+       steps:'1. Client revokes coach access\n2. Coach attempts to view client dashboard',
+       expected_result:'Coach can no longer access client data. Client settings show no coach connected. coach_clients.status = "revoked".'},
+    ];
+
+    for(const c of coachesCases){
+      await sb('qa_test_cases',{method:'POST',body:JSON.stringify({...c,active:true})});
+    }
+    console.log('Seeded',coachesCases.length,'Coaches Center test cases');
   }
 
   if(!mobileExists){
