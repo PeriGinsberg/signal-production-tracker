@@ -692,6 +692,8 @@ let cases=[],runs=[],assignments=[],issues=[];
 let platformFilter='all',surfaceFilter='all',typeFilter='all',priorityFilter='all',activeRunId=null;
 let runStatusFilter='all';
 let openDetails=new Set(),caseSeverities={};
+let openFailForms=new Set(); // track which fail forms are open
+let failFormText={}; // preserve typed text across re-renders
 
 document.getElementById('hdr-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
 
@@ -765,6 +767,12 @@ function renderSurfaceFilters(){
 }
 
 function renderLibrary(){
+  // Save any typed fail form text before re-rendering
+  openFailForms.forEach(id=>{
+    const ta=document.getElementById(`fail-desc-${id}`);
+    if(ta) failFormText[id]=ta.value;
+  });
+
   const el=document.getElementById('library-list');
   const list=getFiltered();
   const run=activeRunId?runs.find(r=>r.id===activeRunId):null;
@@ -838,6 +846,15 @@ function renderLibrary(){
     el.innerHTML=html;
   }
   openDetails.forEach(id=>{const e=document.getElementById(`detail-${id}`);if(e)e.classList.add('open');});
+  // Restore open fail forms and their typed text
+  openFailForms.forEach(id=>{
+    const ff=document.getElementById(`fail-${id}`);
+    if(ff){
+      ff.classList.add('open');
+      const ta=document.getElementById(`fail-desc-${id}`);
+      if(ta && failFormText[id]) ta.value=failFormText[id];
+    }
+  });
 }
 
 function typeColor(t){return{UI:'#51ADE5',API:'#7B5CF6',Functional:'#2DD4BF',Integration:'#fbbf24',Data:'#F472B6'}[t]||'';}
@@ -908,7 +925,15 @@ function selectSev(caseId,sev){caseSeverities[caseId]=sev;['Critical','High','Me
 async function markCase(caseId,status,e){
   e.stopPropagation();
   if(!activeRunId){alert('Select a test run first.');return;}
-  if(status==='fail'){const ff=document.getElementById(`fail-${caseId}`);if(ff)ff.classList.toggle('open');return;}
+  if(status==='fail'){
+    const ff=document.getElementById(`fail-${caseId}`);
+    if(ff){
+      ff.classList.toggle('open');
+      if(ff.classList.contains('open')) openFailForms.add(caseId);
+      else openFailForms.delete(caseId);
+    }
+    return;
+  }
   const tester=document.getElementById(`tester-${caseId}`)?.value?.trim()||'';
   await upsertAssignment(caseId,status,tester,'');
   await loadAll();
@@ -925,6 +950,8 @@ async function clearCase(caseId,e){
   // Close fail form if open
   const ff=document.getElementById(`fail-${caseId}`);
   if(ff)ff.classList.remove('open');
+  openFailForms.delete(caseId);
+  delete failFormText[caseId];
   await loadAll();
 }
 
@@ -945,6 +972,8 @@ async function submitFail(caseId){
     })});
     await upsertAssignment(caseId,'fail',tester,desc,issue?.[0]?.id);
     const ff=document.getElementById(`fail-${caseId}`);if(ff)ff.classList.remove('open');
+    openFailForms.delete(caseId);
+    delete failFormText[caseId];
     await loadAll();showTab('issues');
   }catch(e){alert('Failed: '+e.message);}
 }
@@ -1356,7 +1385,12 @@ ALTER TABLE qa_test_runs ADD COLUMN IF NOT EXISTS platform TEXT DEFAULT 'all';`)
 }
 
 async function bootApp(){await loadAll();await migrateAndSeed();}
-setInterval(loadAll,30000);
+setInterval(() => {
+  // Don't refresh if any fail form is open — would wipe text being typed
+  const anyFailOpen = document.querySelector('.fail-form.open');
+  const anyQlOpen = document.getElementById('ql-modal')?.classList.contains('open');
+  if (!anyFailOpen && !anyQlOpen) loadAll();
+}, 30000);
 </script>
 
 <script>
