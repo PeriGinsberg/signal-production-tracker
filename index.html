@@ -1443,8 +1443,8 @@ ALTER TABLE qa_test_runs ADD COLUMN IF NOT EXISTS platform TEXT DEFAULT 'all';
 ALTER TABLE qa_assignments ADD COLUMN IF NOT EXISTS fix_description TEXT;
 ALTER TABLE qa_assignments ADD COLUMN IF NOT EXISTS fix_deployed_at TIMESTAMPTZ;
 ALTER TABLE qa_assignments ADD COLUMN IF NOT EXISTS assigned_to TEXT;
-CREATE TABLE IF NOT EXISTS qa_retest_cycles (id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL, parent_run_id UUID REFERENCES qa_test_runs(id) ON DELETE CASCADE, assignee TEXT, notes TEXT, case_ids BIGINT[] DEFAULT '{}', case_count INTEGER DEFAULT 0, status TEXT DEFAULT 'open', created_by TEXT, created_at TIMESTAMPTZ DEFAULT NOW(), completed_at TIMESTAMPTZ);
-CREATE TABLE IF NOT EXISTS qa_assignment_history (id BIGSERIAL PRIMARY KEY, case_id BIGINT REFERENCES qa_test_cases(id) ON DELETE CASCADE, run_id UUID REFERENCES qa_test_runs(id) ON DELETE CASCADE, status TEXT NOT NULL, notes TEXT, tester TEXT, assignee TEXT, changed_at TIMESTAMPTZ DEFAULT NOW());`);
+CREATE TABLE IF NOT EXISTS qa_retest_cycles (id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL, parent_run_id BIGINT REFERENCES qa_test_runs(id) ON DELETE CASCADE, assignee TEXT, notes TEXT, case_ids BIGINT[] DEFAULT '{}', case_count INTEGER DEFAULT 0, status TEXT DEFAULT 'open', created_by TEXT, created_at TIMESTAMPTZ DEFAULT NOW(), completed_at TIMESTAMPTZ);
+CREATE TABLE IF NOT EXISTS qa_assignment_history (id BIGSERIAL PRIMARY KEY, case_id BIGINT REFERENCES qa_test_cases(id) ON DELETE CASCADE, run_id BIGINT REFERENCES qa_test_runs(id) ON DELETE CASCADE, status TEXT NOT NULL, notes TEXT, tester TEXT, assignee TEXT, changed_at TIMESTAMPTZ DEFAULT NOW());`);
 }
 
 async function bootApp(){await loadAll();await migrateAndSeed();}
@@ -2769,7 +2769,7 @@ function showRetestSetupSQL(){
 CREATE TABLE IF NOT EXISTS qa_retest_cycles (
   id BIGSERIAL PRIMARY KEY,
   name TEXT NOT NULL,
-  parent_run_id UUID REFERENCES qa_test_runs(id) ON DELETE CASCADE,
+  parent_run_id BIGINT REFERENCES qa_test_runs(id) ON DELETE CASCADE,
   assignee TEXT,
   notes TEXT,
   case_ids BIGINT[] DEFAULT '{}',
@@ -2783,7 +2783,7 @@ CREATE TABLE IF NOT EXISTS qa_retest_cycles (
 CREATE TABLE IF NOT EXISTS qa_assignment_history (
   id BIGSERIAL PRIMARY KEY,
   case_id BIGINT REFERENCES qa_test_cases(id) ON DELETE CASCADE,
-  run_id UUID REFERENCES qa_test_runs(id) ON DELETE CASCADE,
+  run_id BIGINT REFERENCES qa_test_runs(id) ON DELETE CASCADE,
   status TEXT NOT NULL,
   notes TEXT,
   tester TEXT,
