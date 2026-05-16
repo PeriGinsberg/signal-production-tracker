@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -327,6 +328,7 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
   <div class="main-tab" onclick="showTab('issues')">🐛 Issues</div>
   <div class="main-tab" onclick="showTab('reports')">📊 Reports</div>
   <div class="main-tab" onclick="showTab('retest')">🔁 Retest Cycles</div>
+  <div class="main-tab" onclick="showTab('bulletqa')">🎯 Bullet QA</div>
 </div>
 
 <div class="shell">
@@ -524,6 +526,44 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
   <div id="retest-cycles-list"></div>
 </div>
 
+<!-- BULLET QA TAB -->
+<div class="tab-view" id="tab-bulletqa">
+  <div class="section-header">
+    <div class="section-title">🎯 BULLET QA — WHY / RISK QUALITY TRACKING</div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <select id="bqa-tester-filter" style="font-size:11px;padding:5px 8px;width:auto" onchange="renderBulletQA()">
+        <option value="all">All testers</option>
+        <option value="Peri">Peri only</option>
+        <option value="Erin">Erin only</option>
+      </select>
+      <select id="bqa-status-filter" style="font-size:11px;padding:5px 8px;width:auto" onchange="renderBulletQA()">
+        <option value="all">All statuses</option>
+        <option value="open">Open</option>
+        <option value="resolved">Resolved</option>
+      </select>
+      <select id="bqa-severity-filter" style="font-size:11px;padding:5px 8px;width:auto" onchange="renderBulletQA()">
+        <option value="all">All severities</option>
+        <option value="P1">P1 — wrong decision</option>
+        <option value="P2">P2 — misleading output</option>
+        <option value="P3">P3 — minor / cosmetic</option>
+      </select>
+      <button class="run-btn run-btn-secondary" onclick="exportBulletQAMarkdown()" title="Markdown for Claude chat">📋 EXPORT MD</button>
+      <button class="run-btn run-btn-secondary" onclick="exportBulletQAJSON()" title="JSON for Claude Code">📦 EXPORT JSON</button>
+      <button class="run-btn run-btn-primary" onclick="openBulletQAModal()">+ LOG ANALYSIS</button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px">
+    <div class="report-stat"><div class="report-num" style="color:var(--orange)" id="bqa-stat-total">0</div><div class="report-lbl">Total Logged</div></div>
+    <div class="report-stat"><div class="report-num" style="color:var(--coral)" id="bqa-stat-p1">0</div><div class="report-lbl">P1 Open</div></div>
+    <div class="report-stat"><div class="report-num" style="color:var(--amber)" id="bqa-stat-p2">0</div><div class="report-lbl">P2 Open</div></div>
+    <div class="report-stat"><div class="report-num" style="color:var(--muted)" id="bqa-stat-p3">0</div><div class="report-lbl">P3 Open</div></div>
+    <div class="report-stat"><div class="report-num" style="color:var(--green)" id="bqa-stat-resolved">0</div><div class="report-lbl">Resolved</div></div>
+  </div>
+
+  <div id="bqa-list"></div>
+</div>
+
 </main>
 </div>
 
@@ -655,6 +695,70 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
   <div class="modal-actions">
     <button class="btn-cancel" onclick="closeModal('run-modal')">Cancel</button>
     <button class="btn-save" onclick="saveRun()">CREATE RUN</button>
+  </div>
+</div>
+</div>
+
+<!-- BULLET QA MODAL -->
+<div class="modal-overlay" id="bqa-modal" onclick="handleMC(event,'bqa-modal')">
+<div class="modal" style="max-width:780px">
+  <div class="modal-title" id="bqa-modal-title">LOG BULLET QA ANALYSIS</div>
+
+  <div class="form-group">
+    <label class="form-label">1. Paste Dev Tools Network Response (full JSON)</label>
+    <textarea id="bqa-network-response" placeholder="Paste the full response from the JobFit API. Auto-extracts company, role, score, decision, bullets, and version info." style="min-height:140px;font-family:'IBM Plex Mono',monospace;font-size:11px"></textarea>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+      <button onclick="parseBulletResponse()" style="padding:6px 14px;background:var(--teal-bg);border:1px solid var(--teal-border);border-radius:6px;color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;cursor:pointer">⚡ PARSE &amp; EXTRACT</button>
+      <div id="bqa-parse-status" style="font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace"></div>
+    </div>
+  </div>
+
+  <div id="bqa-extracted" style="display:none;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:12px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--orange);margin-bottom:8px">EXTRACTED METADATA</div>
+    <div id="bqa-meta-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;font-family:'IBM Plex Mono',monospace"></div>
+  </div>
+
+  <div id="bqa-bullets-section" style="display:none">
+    <div class="form-label" style="margin-bottom:8px">2. Flag specific bullets <span style="color:var(--dim);font-size:9px;text-transform:none;letter-spacing:0;font-weight:400">— check the ones that are wrong, add a note for each</span></div>
+    <div id="bqa-why-bullets"></div>
+    <div id="bqa-risk-bullets"></div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">3. Overall concern <span style="color:var(--coral);font-size:9px">* required</span></label>
+    <textarea id="bqa-concern" placeholder="e.g. 'Risk #1 should be a Why — student has clear adjacent proof. Decision should be Apply not Review.'" style="min-height:80px"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Expected output <span style="color:var(--dim);font-size:9px;text-transform:none;letter-spacing:0;font-weight:400">— what should this have said?</span></label>
+    <textarea id="bqa-expected" placeholder="Optional. The more specific, the more useful for prompt fixing." style="min-height:60px"></textarea>
+  </div>
+
+  <div class="form-row-3">
+    <div class="form-group">
+      <label class="form-label">Tester</label>
+      <select id="bqa-tester">
+        <option value="Peri">Peri</option>
+        <option value="Erin">Erin</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Severity</label>
+      <select id="bqa-severity">
+        <option value="P1">P1 — wrong decision</option>
+        <option value="P2" selected>P2 — misleading output</option>
+        <option value="P3">P3 — minor / cosmetic</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tags (comma-separated)</label>
+      <input id="bqa-tags" placeholder="hallucinated, too-generic, missing-bridge">
+    </div>
+  </div>
+
+  <div class="modal-actions">
+    <button class="btn-cancel" onclick="closeModal('bqa-modal')">Cancel</button>
+    <button class="btn-save" onclick="saveBulletQA()">SAVE ANALYSIS</button>
   </div>
 </div>
 </div>
@@ -1268,9 +1372,10 @@ function showTab(tab){
   document.querySelectorAll('.tab-view').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
-  const tabIndex=['library','runs','issues','reports','retest'].indexOf(tab);
+  const tabIndex=['library','runs','issues','reports','retest','bulletqa'].indexOf(tab);
   if(tabIndex>=0)document.querySelectorAll('.main-tab')[tabIndex].classList.add('active');
   if(tab==='retest')renderRetestCycles();
+  if(tab==='bulletqa')loadBulletQA();
 }
 
 function updateSurfaceOptions(){
@@ -2866,6 +2971,414 @@ async function upsertAssignment(caseId,status,tester,notes,issueId){
       changed_at:new Date().toISOString()
     })});
   }catch(e){}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BULLET QA — Why/Risk bullet quality tracking
+// ═══════════════════════════════════════════════════════════════════
+
+let bulletIssues = [];
+let bqaParsed = null;
+let bqaFlags = {};
+
+async function loadBulletQA(){
+  try{
+    bulletIssues = await sb('signal_bullet_issues?select=*&order=created_at.desc');
+    renderBulletQA();
+  }catch(e){
+    const el = document.getElementById('bqa-list');
+    if(el) el.innerHTML = `<div class="empty">Could not load Bullet QA table.<br>${esc(e.message)}<br><br>Did you run the migration SQL in Supabase?<br><br><button onclick="showBulletQASQL()" style="background:var(--orange-bg);border:1px solid var(--orange-border);color:var(--orange);padding:8px 16px;border-radius:6px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px">SHOW SETUP SQL</button></div>`;
+  }
+}
+
+function showBulletQASQL(){
+  const sql = `-- SIGNAL Bullet QA setup. Run once in Supabase SQL editor.
+create table if not exists signal_bullet_issues (
+  id bigint generated always as identity primary key,
+  tester text not null default 'Peri',
+  created_at timestamptz default now(),
+  company text, role text, persona_name text,
+  decision text, score int,
+  jobfit_run_id text, fingerprint_code text,
+  jobfit_logic_version text, persona_version int, model text,
+  network_response text,
+  concern text not null,
+  bullet_flags jsonb default '[]'::jsonb,
+  expected text, profile_text text, job_text text,
+  tags text[] default '{}',
+  severity text default 'P2' check (severity in ('P1','P2','P3')),
+  resolved boolean default false,
+  resolution_note text
+);
+create index if not exists sbi_tester_idx on signal_bullet_issues (tester);
+create index if not exists sbi_resolved_idx on signal_bullet_issues (resolved);
+create index if not exists sbi_created_idx on signal_bullet_issues (created_at desc);
+create index if not exists sbi_logic_version_idx on signal_bullet_issues (jobfit_logic_version);
+create index if not exists sbi_tags_idx on signal_bullet_issues using gin (tags);
+alter table signal_bullet_issues enable row level security;
+drop policy if exists "allow all" on signal_bullet_issues;
+create policy "allow all" on signal_bullet_issues for all using (true) with check (true);`;
+  prompt('Run this in Supabase → SQL Editor:', sql);
+}
+
+function renderBulletQA(){
+  const list = bulletIssues || [];
+  const tFilter = document.getElementById('bqa-tester-filter')?.value || 'all';
+  const sFilter = document.getElementById('bqa-status-filter')?.value || 'all';
+  const sevFilter = document.getElementById('bqa-severity-filter')?.value || 'all';
+
+  let filtered = list;
+  if(tFilter !== 'all') filtered = filtered.filter(i => i.tester === tFilter);
+  if(sFilter === 'open') filtered = filtered.filter(i => !i.resolved);
+  if(sFilter === 'resolved') filtered = filtered.filter(i => i.resolved);
+  if(sevFilter !== 'all') filtered = filtered.filter(i => i.severity === sevFilter);
+
+  const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  setTxt('bqa-stat-total', list.length);
+  setTxt('bqa-stat-p1', list.filter(i=>i.severity==='P1' && !i.resolved).length);
+  setTxt('bqa-stat-p2', list.filter(i=>i.severity==='P2' && !i.resolved).length);
+  setTxt('bqa-stat-p3', list.filter(i=>i.severity==='P3' && !i.resolved).length);
+  setTxt('bqa-stat-resolved', list.filter(i=>i.resolved).length);
+
+  const el = document.getElementById('bqa-list');
+  if(!el) return;
+  if(!filtered.length){
+    el.innerHTML = `<div class="empty">${list.length ? 'NO ISSUES MATCH FILTER' : 'NO BULLET QA ISSUES LOGGED YET<br><br>Click + LOG ANALYSIS to start.'}</div>`;
+    return;
+  }
+  el.innerHTML = filtered.map(bqaCard).join('');
+}
+
+function bqaCard(i){
+  const flags = Array.isArray(i.bullet_flags) ? i.bullet_flags : [];
+  const flagCount = flags.filter(f => f.flagged).length;
+  const sevColor = i.severity === 'P1' ? 'var(--coral)' : i.severity === 'P2' ? 'var(--amber)' : 'var(--muted)';
+  const tags = Array.isArray(i.tags) ? i.tags : [];
+  const tester = i.tester || '—';
+  const testerColor = tester === 'Peri' ? 'var(--orange)' : tester === 'Erin' ? 'var(--teal)' : 'var(--muted)';
+
+  return `<div class="card" id="bqa-card-${i.id}" style="margin-bottom:8px;border-left:4px solid ${sevColor}">
+    <div class="card-header" onclick="bqaToggleDetail(${i.id})" style="align-items:flex-start">
+      <div class="card-id" style="width:80px">BQA-${String(i.id).padStart(3,'0')}</div>
+      <div class="card-main">
+        <div class="card-surface" style="color:${sevColor}">${esc(i.company || '—')} · ${esc(i.role || '—')}</div>
+        <div class="card-title" style="white-space:normal">${esc((i.concern||'').substring(0,180))}${(i.concern||'').length > 180 ? '…' : ''}</div>
+        <div style="display:flex;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);margin-top:4px;flex-wrap:wrap">
+          <span style="color:${testerColor};font-weight:700">${esc(tester)}</span>
+          <span>·</span>
+          <span>${esc(i.persona_name || '—')}</span>
+          <span>·</span>
+          <span>${esc(i.decision || '—')}${i.score != null ? ' · ' + i.score : ''}</span>
+          <span>·</span>
+          <span>${new Date(i.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</span>
+          ${i.jobfit_logic_version ? `<span>·</span><span title="${esc(i.jobfit_logic_version)}">v${esc(i.jobfit_logic_version.substring(0,7))}</span>` : ''}
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge" style="background:${sevColor};color:#0B0F1A;border:none">${i.severity}</span>
+        ${flagCount ? `<span class="badge badge-medium">${flagCount} BULLET${flagCount>1?'S':''} FLAGGED</span>` : ''}
+        ${i.resolved ? '<span class="badge badge-pass">RESOLVED</span>' : '<span class="badge badge-untested">OPEN</span>'}
+      </div>
+    </div>
+    <div class="card-detail" id="bqa-detail-${i.id}">
+      ${i.expected ? `<div class="detail-row"><div class="detail-label">Expected</div><div class="expected-box">${esc(i.expected)}</div></div>` : ''}
+      ${tags.length ? `<div class="detail-row"><div class="detail-label">Tags</div><div style="display:flex;gap:4px;flex-wrap:wrap">${tags.map(t=>`<span class="badge badge-medium">${esc(t)}</span>`).join('')}</div></div>` : ''}
+      ${flags.filter(f=>f.flagged).length ? `
+        <div class="detail-row">
+          <div class="detail-label">Flagged Bullets</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            ${flags.filter(f=>f.flagged).map(f => `
+              <div style="background:var(--bg4);border-left:3px solid var(--coral);border-radius:0 6px 6px 0;padding:8px 12px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--coral);letter-spacing:1px;margin-bottom:4px">
+                  ${(f.type||'').toUpperCase()} #${(f.index||0) + 1}${f.current?.keyword ? ' · ' + esc(f.current.keyword) : ''}
+                </div>
+                ${f.note ? `<div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:6px">${esc(f.note)}</div>` : '<div style="font-size:11px;color:var(--dim);font-style:italic;margin-bottom:6px">(flagged, no note)</div>'}
+                ${f.current ? `
+                  <details>
+                    <summary style="cursor:pointer;font-size:10px;color:var(--dim);font-family:'IBM Plex Mono',monospace">Show original bullet</summary>
+                    <div style="font-size:11px;color:var(--dim);margin-top:6px;line-height:1.5">
+                      ${f.current.lead ? '<div><b>Lead:</b> '+esc(f.current.lead)+'</div>' : ''}
+                      ${f.current.gap ? '<div><b>Gap:</b> '+esc(f.current.gap)+'</div>' : ''}
+                      ${f.current.connection ? '<div><b>Connection:</b> '+esc(f.current.connection)+'</div>' : ''}
+                      ${f.current.reframe ? '<div><b>Reframe:</b> '+esc(f.current.reframe)+'</div>' : ''}
+                      ${f.current.action ? '<div><b>Action:</b> '+esc(f.current.action)+'</div>' : ''}
+                    </div>
+                  </details>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>` : ''}
+      ${i.network_response ? `
+        <details>
+          <summary style="cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--orange);margin-top:6px">Raw network response (${Math.round(i.network_response.length / 1024)}KB)</summary>
+          <pre style="background:var(--bg4);border:1px solid var(--border2);border-radius:6px;padding:10px;font-size:10px;color:var(--muted);max-height:300px;overflow:auto;margin-top:6px;white-space:pre-wrap;word-break:break-word">${esc(i.network_response)}</pre>
+        </details>` : ''}
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button onclick="toggleBqaResolved(${i.id})" style="padding:5px 12px;background:${i.resolved ? 'var(--bg3)' : 'var(--green-bg)'};border:1px solid ${i.resolved ? 'var(--border2)' : 'var(--green-border)'};border-radius:5px;color:${i.resolved ? 'var(--muted)' : 'var(--green)'};font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;cursor:pointer">${i.resolved ? '↶ REOPEN' : '✓ MARK RESOLVED'}</button>
+        <button onclick="deleteBqa(${i.id})" style="padding:5px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;color:var(--muted);font-size:11px;cursor:pointer">Delete</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function bqaToggleDetail(id){
+  const el = document.getElementById('bqa-detail-'+id);
+  if(el) el.classList.toggle('open');
+}
+
+function openBulletQAModal(){
+  document.getElementById('bqa-network-response').value = '';
+  document.getElementById('bqa-concern').value = '';
+  document.getElementById('bqa-expected').value = '';
+  document.getElementById('bqa-tags').value = '';
+  document.getElementById('bqa-extracted').style.display = 'none';
+  document.getElementById('bqa-bullets-section').style.display = 'none';
+  document.getElementById('bqa-parse-status').textContent = '';
+  bqaParsed = null;
+  bqaFlags = {};
+  document.getElementById('bqa-modal').classList.add('open');
+}
+
+function parseBulletResponse(){
+  const raw = document.getElementById('bqa-network-response').value.trim();
+  const statusEl = document.getElementById('bqa-parse-status');
+  if(!raw){
+    statusEl.style.color = 'var(--coral)';
+    statusEl.textContent = 'paste something first';
+    return;
+  }
+  let data;
+  try { data = JSON.parse(raw); }
+  catch(e) {
+    statusEl.style.color = 'var(--coral)';
+    statusEl.textContent = '✗ not valid JSON: ' + e.message.substring(0, 60);
+    return;
+  }
+  bqaParsed = data;
+
+  const meta = {
+    Company: data?.job_signals?.companyName || '—',
+    Role: data?.job_signals?.jobTitle || '—',
+    Persona: data?.personaName || '—',
+    Decision: data?.decision || '—',
+    Score: data?.score != null ? String(data.score) : '—',
+    Model: data?.debug?.model || '—',
+    'Logic version': (data?.jobfit_logic_version || '—').substring(0, 12),
+    'Run ID': (data?.jobfit_run_id || '—').substring(0, 12),
+  };
+  document.getElementById('bqa-meta-grid').innerHTML = Object.entries(meta).map(([k,v]) =>
+    `<div><span style="color:var(--dim)">${k}:</span> <span style="color:var(--text)">${esc(v)}</span></div>`
+  ).join('');
+  document.getElementById('bqa-extracted').style.display = 'block';
+
+  const whyStructured = Array.isArray(data?.why_structured) ? data.why_structured : [];
+  const riskStructured = Array.isArray(data?.risk_structured) ? data.risk_structured : [];
+
+  document.getElementById('bqa-why-bullets').innerHTML = whyStructured.length
+    ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--green);margin:12px 0 6px">WHY BULLETS (${whyStructured.length})</div>` +
+      whyStructured.map((b, idx) => bqaBulletRow('why', idx, b)).join('')
+    : `<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);margin:12px 0 6px">No why_structured array in response</div>`;
+
+  document.getElementById('bqa-risk-bullets').innerHTML = riskStructured.length
+    ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--coral);margin:12px 0 6px">RISK BULLETS (${riskStructured.length})</div>` +
+      riskStructured.map((b, idx) => bqaBulletRow('risk', idx, b)).join('')
+    : `<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);margin:12px 0 6px">No risk_structured array in response</div>`;
+
+  document.getElementById('bqa-bullets-section').style.display = 'block';
+
+  statusEl.style.color = 'var(--green)';
+  statusEl.textContent = `✓ extracted · ${whyStructured.length} why · ${riskStructured.length} risk`;
+}
+
+function bqaBulletRow(type, idx, bullet){
+  const key = `${type}-${idx}`;
+  const sevBadge = bullet.severity ? `<span class="badge badge-${bullet.severity === 'high' ? 'critical' : bullet.severity === 'medium' ? 'medium' : 'low'}">${bullet.severity}</span>` : '';
+  const color = type === 'why' ? 'var(--green)' : 'var(--coral)';
+  return `<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px;margin-bottom:6px">
+    <div style="display:flex;align-items:flex-start;gap:8px">
+      <input type="checkbox" id="bqa-flag-${key}" onchange="bqaToggleFlag('${type}',${idx})" style="margin-top:3px;width:auto;cursor:pointer">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;color:${color}">${type.toUpperCase()} #${idx + 1}</span>
+          ${bullet.keyword ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text);font-weight:600">${esc(bullet.keyword)}</span>` : ''}
+          ${sevBadge}
+        </div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:6px">
+          ${bullet.lead ? `<div><b style="color:var(--text)">Lead:</b> ${esc(bullet.lead)}</div>` : ''}
+          ${bullet.gap ? `<div><b style="color:var(--text)">Gap:</b> ${esc(bullet.gap)}</div>` : ''}
+          ${bullet.connection ? `<div><b style="color:var(--text)">Connection:</b> ${esc(bullet.connection)}</div>` : ''}
+          ${bullet.reframe ? `<div><b style="color:var(--text)">Reframe:</b> ${esc(bullet.reframe)}</div>` : ''}
+          ${bullet.action ? `<div><b style="color:var(--text)">Action:</b> ${esc(bullet.action)}</div>` : ''}
+        </div>
+        <textarea id="bqa-note-${key}" placeholder="What's wrong with this bullet? What should it have said?" style="min-height:48px;font-size:11px;display:none" oninput="bqaUpdateNote('${type}',${idx},this.value)"></textarea>
+      </div>
+    </div>
+  </div>`;
+}
+
+function bqaToggleFlag(type, idx){
+  const key = `${type}-${idx}`;
+  const checkbox = document.getElementById(`bqa-flag-${key}`);
+  const note = document.getElementById(`bqa-note-${key}`);
+  const flagged = checkbox.checked;
+  note.style.display = flagged ? 'block' : 'none';
+  if(!bqaFlags[key]) bqaFlags[key] = { type, index: idx };
+  bqaFlags[key].flagged = flagged;
+  if(bqaParsed){
+    const arr = type === 'why' ? bqaParsed.why_structured : bqaParsed.risk_structured;
+    if(Array.isArray(arr) && arr[idx]) bqaFlags[key].current = arr[idx];
+  }
+}
+
+function bqaUpdateNote(type, idx, value){
+  const key = `${type}-${idx}`;
+  if(!bqaFlags[key]) bqaFlags[key] = { type, index: idx };
+  bqaFlags[key].note = value;
+}
+
+async function saveBulletQA(){
+  const concern = document.getElementById('bqa-concern').value.trim();
+  if(!concern){ alert('Please describe your overall concern.'); return; }
+
+  const flagsArray = Object.values(bqaFlags).filter(f => f.flagged);
+  const tags = document.getElementById('bqa-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+
+  const payload = {
+    tester: document.getElementById('bqa-tester').value,
+    network_response: document.getElementById('bqa-network-response').value.trim() || null,
+    concern,
+    expected: document.getElementById('bqa-expected').value.trim() || null,
+    severity: document.getElementById('bqa-severity').value,
+    tags,
+    bullet_flags: flagsArray,
+  };
+
+  if(bqaParsed){
+    payload.company = bqaParsed?.job_signals?.companyName || null;
+    payload.role = bqaParsed?.job_signals?.jobTitle || null;
+    payload.persona_name = bqaParsed?.personaName || null;
+    payload.decision = bqaParsed?.decision || null;
+    payload.score = bqaParsed?.score != null ? Number(bqaParsed.score) : null;
+    payload.jobfit_run_id = bqaParsed?.jobfit_run_id || null;
+    payload.fingerprint_code = bqaParsed?.fingerprint_code || null;
+    payload.jobfit_logic_version = bqaParsed?.jobfit_logic_version || null;
+    payload.persona_version = bqaParsed?.personaVersionAtRun != null ? Number(bqaParsed.personaVersionAtRun) : null;
+    payload.model = bqaParsed?.debug?.model || null;
+  }
+
+  try {
+    await sb('signal_bullet_issues', { method: 'POST', body: JSON.stringify(payload) });
+    closeModal('bqa-modal');
+    await loadBulletQA();
+  } catch(e) {
+    alert('Save failed: ' + e.message);
+  }
+}
+
+async function toggleBqaResolved(id){
+  const item = bulletIssues.find(i => i.id === id);
+  if(!item) return;
+  try {
+    await sb(`signal_bullet_issues?id=eq.${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ resolved: !item.resolved })
+    });
+    await loadBulletQA();
+  } catch(e) { alert('Update failed: ' + e.message); }
+}
+
+async function deleteBqa(id){
+  if(!confirm('Delete this bullet QA entry permanently?')) return;
+  try {
+    await sb(`signal_bullet_issues?id=eq.${id}`, { method: 'DELETE' });
+    await loadBulletQA();
+  } catch(e) { alert('Delete failed: ' + e.message); }
+}
+
+function exportBulletQAMarkdown(){
+  const list = bulletIssues || [];
+  if(!list.length){ alert('No bullet QA issues to export yet.'); return; }
+
+  const date = new Date().toISOString().split('T')[0];
+  let md = `# SIGNAL Bullet QA — Export\n\n`;
+  md += `**Date:** ${date}\n`;
+  md += `**Total issues:** ${list.length} (${list.filter(i=>!i.resolved).length} open · ${list.filter(i=>i.resolved).length} resolved)\n`;
+  md += `**Testers:** ${[...new Set(list.map(i=>i.tester))].join(', ')}\n\n`;
+
+  md += `## Summary by severity\n\n| Severity | Open | Resolved |\n|---|---|---|\n`;
+  ['P1','P2','P3'].forEach(s => {
+    md += `| ${s} | ${list.filter(i=>i.severity===s && !i.resolved).length} | ${list.filter(i=>i.severity===s && i.resolved).length} |\n`;
+  });
+  md += `\n`;
+
+  const tagCounts = {};
+  list.forEach(i => (i.tags || []).forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; }));
+  if(Object.keys(tagCounts).length){
+    md += `## Tag frequency\n\n`;
+    Object.entries(tagCounts).sort((a,b) => b[1] - a[1]).forEach(([tag, count]) => {
+      md += `- **${tag}**: ${count}\n`;
+    });
+    md += `\n`;
+  }
+
+  md += `## Issues\n\n`;
+  list.forEach(i => {
+    const flags = Array.isArray(i.bullet_flags) ? i.bullet_flags : [];
+    md += `---\n\n### BQA-${String(i.id).padStart(3,'0')} — ${i.company || '—'} · ${i.role || '—'}\n\n`;
+    md += `- **Tester:** ${i.tester} · **Severity:** ${i.severity} · **Status:** ${i.resolved ? 'Resolved' : 'Open'}\n`;
+    md += `- **Persona:** ${i.persona_name || '—'} · **Decision:** ${i.decision || '—'} (score ${i.score ?? '—'})\n`;
+    md += `- **Logic version:** \`${i.jobfit_logic_version || '—'}\` · **Model:** ${i.model || '—'}\n`;
+    md += `- **Run ID:** \`${i.jobfit_run_id || '—'}\`\n`;
+    if(i.tags?.length) md += `- **Tags:** ${i.tags.join(', ')}\n`;
+    md += `- **Logged:** ${new Date(i.created_at).toLocaleString()}\n\n`;
+    md += `**Concern:**\n\n${i.concern}\n\n`;
+    if(i.expected) md += `**Expected:**\n\n${i.expected}\n\n`;
+
+    const flaggedBullets = flags.filter(f => f.flagged);
+    if(flaggedBullets.length){
+      md += `**Flagged bullets:**\n\n`;
+      flaggedBullets.forEach(f => {
+        md += `<details>\n<summary><b>${(f.type||'').toUpperCase()} #${(f.index||0) + 1}${f.current?.keyword ? ' — ' + f.current.keyword : ''}</b></summary>\n\n`;
+        if(f.note) md += `**Note:** ${f.note}\n\n`;
+        if(f.current){
+          if(f.current.lead) md += `- Lead: ${f.current.lead}\n`;
+          if(f.current.gap) md += `- Gap: ${f.current.gap}\n`;
+          if(f.current.connection) md += `- Connection: ${f.current.connection}\n`;
+          if(f.current.reframe) md += `- Reframe: ${f.current.reframe}\n`;
+          if(f.current.action) md += `- Action: ${f.current.action}\n`;
+        }
+        md += `\n</details>\n\n`;
+      });
+    }
+    if(i.network_response){
+      md += `<details>\n<summary>Raw network response (${Math.round(i.network_response.length / 1024)}KB)</summary>\n\n\`\`\`json\n${i.network_response}\n\`\`\`\n\n</details>\n\n`;
+    }
+  });
+
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `signal_bullet_qa_${date}.md`;
+  a.click();
+}
+
+function exportBulletQAJSON(){
+  const list = bulletIssues || [];
+  if(!list.length){ alert('No bullet QA issues to export yet.'); return; }
+  const date = new Date().toISOString().split('T')[0];
+  const json = JSON.stringify({
+    exported_at: new Date().toISOString(),
+    total: list.length,
+    open: list.filter(i=>!i.resolved).length,
+    resolved: list.filter(i=>i.resolved).length,
+    issues: list
+  }, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `signal_bullet_qa_${date}.json`;
+  a.click();
 }
 
 bootApp();
