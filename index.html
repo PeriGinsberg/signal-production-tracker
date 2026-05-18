@@ -200,6 +200,7 @@ main{padding:24px;overflow-y:auto;}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
 .form-row-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;}
+.form-row-5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
 input,textarea,select{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:13px;padding:9px 11px;outline:none;width:100%;transition:border-color 0.15s;}
 input:focus,textarea:focus,select:focus{border-color:var(--orange-border);}
 textarea{resize:vertical;min-height:70px;line-height:1.5;}
@@ -266,6 +267,8 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
 .plat-btn.web.active{background:var(--blue);color:#0B0F1A;box-shadow:0 0 12px rgba(77,184,255,0.4);}
 .plat-btn.mobile.active{background:var(--teal);color:#0B0F1A;box-shadow:0 0 12px rgba(0,245,212,0.4);}
 .plat-btn.both.active{background:var(--orange);color:#0B0F1A;box-shadow:0 0 12px rgba(255,149,0,0.4);}
+.plat-btn#env-dev.active{background:var(--orange);color:#0B0F1A;box-shadow:0 0 12px rgba(255,149,0,0.4);}
+.plat-btn#env-prod.active{background:var(--green);color:#0B0F1A;box-shadow:0 0 12px rgba(48,209,88,0.4);}
 /* Cards slide on hover */
 .card:hover{border-color:var(--border3);transform:translateX(2px);}
 /* Bolder status borders */
@@ -351,6 +354,14 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
     <button class="plat-btn both active" id="plat-both" onclick="setPlatform('all',this)">Both</button>
     <button class="plat-btn web" id="plat-web" onclick="setPlatform('Web',this)">🌐 Web</button>
     <button class="plat-btn mobile" id="plat-mobile" onclick="setPlatform('Mobile',this)">📱 Mobile</button>
+  </div>
+
+  <div class="sb-div"></div>
+  <div class="sb-label">Environment</div>
+  <div class="platform-toggle">
+    <button class="plat-btn both active" id="env-all" onclick="setEnvFilter('all',this)">All</button>
+    <button class="plat-btn web" id="env-dev" onclick="setEnvFilter('dev',this)" style="background:rgba(255,149,0,0.12);border:1px solid rgba(255,149,0,0.38)!important;color:var(--orange)">Dev</button>
+    <button class="plat-btn web" id="env-prod" onclick="setEnvFilter('prod',this)" style="background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.38)!important;color:var(--green)">Prod</button>
   </div>
 
   <div class="sb-div"></div>
@@ -457,6 +468,11 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
   <div class="section-header">
     <div class="section-title">ALL ISSUES</div>
     <div style="display:flex;gap:6px;align-items:center">
+      <select id="issue-environment-filter" style="font-size:11px;padding:5px 8px;width:auto" onchange="renderIssues()">
+        <option value="all">All environments</option>
+        <option value="dev">Dev</option>
+        <option value="prod">Prod</option>
+      </select>
       <select id="issue-platform-filter" style="font-size:11px;padding:5px 8px;width:auto" onchange="renderIssues()">
         <option value="all">All platforms</option>
         <option value="Web">Web only</option>
@@ -531,6 +547,11 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
   <div class="section-header">
     <div class="section-title">🎯 BULLET QA — WHY / RISK QUALITY TRACKING</div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <select id="bqa-environment-filter" style="font-size:11px;padding:5px 8px;width:auto" onchange="renderBulletQA()">
+        <option value="all">All environments</option>
+        <option value="dev">Dev</option>
+        <option value="prod">Prod</option>
+      </select>
       <select id="bqa-tester-filter" style="font-size:11px;padding:5px 8px;width:auto" onchange="renderBulletQA()">
         <option value="all">All testers</option>
         <option value="Peri">Peri only</option>
@@ -600,7 +621,7 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
 <div class="modal">
   <div class="modal-title" id="case-modal-title">ADD TEST CASE</div>
   <input type="hidden" id="c-id" value="">
-  <div class="form-row-4">
+  <div class="form-row-5">
     <div class="form-group">
       <label class="form-label">Platform</label>
       <select id="c-platform" onchange="updateSurfaceOptions()">
@@ -631,6 +652,14 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
         <option value="Low">Low</option>
       </select>
     </div>
+    <div class="form-group">
+      <label class="form-label">Environment</label>
+      <select id="c-environment">
+        <option value="dev">Dev</option>
+        <option value="prod" selected>Prod</option>
+        <option value="both">Both</option>
+      </select>
+    </div>
   </div>
   <div class="form-group">
     <label class="form-label">Title</label>
@@ -659,10 +688,18 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
 <div class="modal-overlay" id="run-modal" onclick="handleMC(event,'run-modal')">
 <div class="modal">
   <div class="modal-title">CREATE TEST RUN</div>
-  <div class="form-row">
+  <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr">
     <div class="form-group">
       <label class="form-label">Run Name</label>
       <input id="r-name" placeholder="e.g. Pre-launch regression — Apr 12" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Environment</label>
+      <select id="r-environment">
+        <option value="dev">Dev</option>
+        <option value="prod" selected>Prod</option>
+        <option value="both">Both</option>
+      </select>
     </div>
     <div class="form-group">
       <label class="form-label">Platform Focus</label>
@@ -734,7 +771,14 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
     <textarea id="bqa-expected" placeholder="Optional. The more specific, the more useful for prompt fixing." style="min-height:60px"></textarea>
   </div>
 
-  <div class="form-row-3">
+  <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr 1fr">
+    <div class="form-group">
+      <label class="form-label">Environment</label>
+      <select id="bqa-environment">
+        <option value="dev">Dev</option>
+        <option value="prod" selected>Prod</option>
+      </select>
+    </div>
     <div class="form-group">
       <label class="form-label">Tester</label>
       <select id="bqa-tester">
@@ -771,7 +815,14 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
     <div class="modal-title">QUICK LOG ISSUE</div>
   </div>
   <div style="font-size:12px;color:var(--muted)">Found a bug while using the product? Log it in 30 seconds. No test case or run needed.</div>
-  <div class="form-row">
+  <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr">
+    <div class="form-group">
+      <label class="form-label">Environment</label>
+      <select id="ql-environment">
+        <option value="dev">Dev</option>
+        <option value="prod" selected>Prod</option>
+      </select>
+    </div>
     <div class="form-group">
       <label class="form-label">Platform</label>
       <select id="ql-platform">
@@ -844,7 +895,7 @@ const TYPES=['UI','API','Functional','Integration','Data'];
 const PRIORITIES=['Critical','High','Medium','Low'];
 
 let cases=[],runs=[],assignments=[],issues=[],retestCycles=[],assignmentHistory=[];
-let platformFilter='all',surfaceFilter='all',typeFilter='all',priorityFilter='all',activeRunId=null;
+let platformFilter='all',surfaceFilter='all',typeFilter='all',priorityFilter='all',envFilter='all',activeRunId=null;
 let runStatusFilter='all';
 let openDetails=new Set(),caseSeverities={};
 let openFailForms=new Set(); // track which fail forms are open
@@ -895,6 +946,7 @@ function getFiltered(){
   if(surfaceFilter!=='all')list=list.filter(c=>c.surface===surfaceFilter);
   if(typeFilter!=='all')list=list.filter(c=>c.test_type===typeFilter);
   if(priorityFilter!=='all')list=list.filter(c=>c.priority===priorityFilter);
+  if(envFilter!=='all')list=list.filter(c=>c.environment===envFilter||c.environment==='both');
   // When a run is active, filter by run membership first
   if(activeRunId){
     const runCaseIds=new Set(assignments.filter(a=>a.run_id===activeRunId).map(a=>a.case_id));
@@ -1038,6 +1090,7 @@ function caseCard(c){
       </div>
       <div class="card-badges">
         <span class="plat-badge ${isWeb?'plat-web':'plat-mobile'}">${isWeb?'WEB':'iOS'}</span>
+        ${envBadge(c.environment)}
         <span class="type-badge type-${type.toLowerCase()}">${type}</span>
         <span class="badge badge-${pri}">${c.priority}</span>
         <span class="badge badge-${status}">${status}</span>
@@ -1138,6 +1191,7 @@ async function submitFail(caseId){
       test_case_id:caseId,test_run_id:activeRunId,
       platform:tc?.platform||'Web',surface:tc?.surface||'',
       title:tc?.title||'',description:desc,
+      environment:tc?.environment||'prod',
       severity:sev,status:'open',origin:'test_run',
       tester:tester||null,created_at:new Date().toISOString()
     })});
@@ -1162,7 +1216,7 @@ function renderRuns(){
     const pct=total?Math.round(pass/total*100):0;
     return`<div class="run-card">
       <div style="display:flex;align-items:flex-start;justify-content:space-between">
-        <div><div class="run-name">${esc(run.name)}</div><div class="run-meta">${new Date(run.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})} · by ${esc(run.created_by||'?')}${run.testers?' · '+esc(run.testers):''}</div></div>
+        <div><div class="run-name">${esc(run.name)}</div><div class="run-meta">${new Date(run.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})} ${envBadge(run.environment)} · by ${esc(run.created_by||'?')}${run.testers?' · '+esc(run.testers):''}</div></div>
         <div style="display:flex;gap:6px;align-items:center">
           ${run.platform&&run.platform!=='all'?`<span class="plat-badge ${run.platform==='Web'?'plat-web':'plat-mobile'}">${run.platform}</span>`:''}
           <span class="badge ${run.status==='complete'?'badge-pass':'badge-untested'}">${run.status||'active'}</span>
@@ -1187,14 +1241,17 @@ function renderRuns(){
 
 function renderIssues(){
   const el=document.getElementById('issues-list');
+  const ef=document.getElementById('issue-environment-filter')?.value||'all';
   const pf=document.getElementById('issue-platform-filter')?.value||'all';
   const of2=document.getElementById('issue-origin-filter')?.value||'all';
   const sf=document.getElementById('issue-filter')?.value||'all';
   let list=[...issues];
+  if(ef!=='all')list=list.filter(i=>i.environment===ef);
   if(pf!=='all')list=list.filter(i=>i.platform===pf);
   if(of2==='ad_hoc')list=list.filter(i=>i.origin==='ad_hoc');
   if(of2==='test_run')list=list.filter(i=>i.origin!=='ad_hoc');
   if(sf!=='all')list=list.filter(i=>i.status===sf);
+  if(envFilter!=='all')list=list.filter(i=>i.environment===envFilter||i.environment==='both');
   if(!list.length){el.innerHTML='<div class="empty">NO ISSUES<br>Issues appear when tests fail or you use Quick Log</div>';return;}
   el.innerHTML=list.map(issue=>{
     const run=runs.find(r=>r.id===issue.test_run_id);
@@ -1209,6 +1266,7 @@ function renderIssues(){
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;flex-wrap:wrap">
             <span class="plat-badge ${isMobile?'plat-mobile':'plat-web'}">${isMobile?'iOS':'WEB'}</span>
+            ${envBadge(issue.environment)}
             <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:${color}">${esc(issue.surface)}</span>
             ${isAdHoc?'<span class="adhoc-badge">Ad hoc</span>':'<span class="run-badge">Test run</span>'}
             ${run?`<span style="font-size:9px;color:var(--dim)">· ${esc(run.name)}</span>`:''}
@@ -1306,6 +1364,12 @@ function setPlatform(p,btn){
   renderSurfaceFilters();renderLibrary();updateStats();
 }
 function setSurfaceFilter(f,btn){surfaceFilter=f;renderSurfaceFilters();renderLibrary();}
+function setEnvFilter(env,btn){
+  envFilter=env;
+  document.querySelectorAll('#env-all, #env-dev, #env-prod').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLibrary();renderIssues();renderReport();updateStats();
+}
 function setTypeFilter(f,btn){typeFilter=f;document.querySelectorAll('.filter-list .fb').forEach(b=>{if(b.id&&b.id.startsWith('ft-'))b.classList.remove('active');});btn.classList.add('active');renderLibrary();}
 function setPriorityFilter(f,btn){priorityFilter=f;renderLibrary();}
 function setActiveRun(id){
@@ -1386,6 +1450,7 @@ function updateSurfaceOptions(){
 
 function openCaseModal(){
   document.getElementById('c-id').value='';
+  document.getElementById('c-environment').value='prod';
   document.getElementById('case-modal-title').textContent='ADD TEST CASE';
   document.getElementById('case-save-btn').textContent='SAVE CASE';
   updateSurfaceOptions();
@@ -1397,6 +1462,7 @@ function openRunModal(){
   document.getElementById('r-creator').value='';
   document.getElementById('r-testers').value='';
   document.getElementById('r-platform').value='all';
+  document.getElementById('r-environment').value='prod';
   populateRunCaseList();
   document.getElementById('run-modal').classList.add('open');
 }
@@ -1445,6 +1511,7 @@ async function saveCase(){
     surface:document.getElementById('c-surface').value,
     test_type:document.getElementById('c-type').value,
     priority:document.getElementById('c-priority').value,
+    environment:document.getElementById('c-environment').value,
     title,description:document.getElementById('c-desc').value.trim(),
     steps:document.getElementById('c-steps').value.trim(),
     expected_result:document.getElementById('c-expected').value.trim(),active:true,
@@ -1466,6 +1533,7 @@ function editCase(id){
   document.getElementById('c-surface').value=tc.surface;
   document.getElementById('c-type').value=tc.test_type||'UI';
   document.getElementById('c-priority').value=tc.priority||'High';
+  document.getElementById('c-environment').value=tc.environment||'prod';
   document.getElementById('c-title').value=tc.title;
   document.getElementById('c-desc').value=tc.description||'';
   document.getElementById('c-steps').value=tc.steps||'';
@@ -1487,6 +1555,7 @@ async function saveRun(){
       name,created_by:document.getElementById('r-creator').value.trim()||null,
       testers:document.getElementById('r-testers').value.trim()||null,
       platform:document.getElementById('r-platform').value,
+      environment:document.getElementById('r-environment').value,
       status:'active',case_count:selectedCases.length,
     })});
     const runId=runData[0].id;
@@ -1503,6 +1572,7 @@ function openQuickLog(){
   document.getElementById('ql-desc').value='';
   document.getElementById('ql-tester').value='';
   document.getElementById('ql-url').value='';
+  document.getElementById('ql-environment').value='prod';
   document.getElementById('ql-modal').classList.add('open');
   setTimeout(()=>document.getElementById('ql-desc').focus(),100);
 }
@@ -1515,12 +1585,13 @@ async function submitQuickLog(){
   const severity=document.getElementById('ql-severity').value;
   const tester=document.getElementById('ql-tester').value.trim()||null;
   const url=document.getElementById('ql-url').value.trim()||null;
+  const environment=document.getElementById('ql-environment').value;
   const btn=document.getElementById('ql-save-btn');
   btn.textContent='LOGGING...';btn.disabled=true;
   try{
     await sb('qa_issues',{method:'POST',body:JSON.stringify({
       platform,surface,title:desc.slice(0,120),description:desc,
-      severity,status:'open',origin:'ad_hoc',
+      severity,status:'open',origin:'ad_hoc',environment,
       tester,url,created_at:new Date().toISOString()
     })});
     closeModal('ql-modal');await loadAll();showTab('issues');
@@ -1529,16 +1600,16 @@ async function submitQuickLog(){
 }
 
 function exportCSV(){
-  const caseRows=[['TC-ID','Platform','Surface','Type','Priority','Title','Status','Tester','Run','Notes','Issue-ID']];
+  const caseRows=[['TC-ID','Platform','Environment','Surface','Type','Priority','Title','Status','Tester','Run','Notes','Issue-ID']];
   cases.forEach(c=>{
     const a=assignments.find(x=>x.case_id===c.id);
     const run=a?runs.find(r=>r.id===a.run_id):null;
-    caseRows.push([`TC-${String(c.id).padStart(3,'0')}`,c.platform||'Web',c.surface,c.test_type||'UI',c.priority,c.title,a?a.status:'untested',a?.tester||'',run?.name||'',a?.notes||'',a?.issue_id?`ISS-${String(a.issue_id).padStart(3,'0')}`:'']);
+    caseRows.push([`TC-${String(c.id).padStart(3,'0')}`,c.platform||'Web',c.environment||'prod',c.surface,c.test_type||'UI',c.priority,c.title,a?a.status:'untested',a?.tester||'',run?.name||'',a?.notes||'',a?.issue_id?`ISS-${String(a.issue_id).padStart(3,'0')}`:'']);
   });
-  const issueRows=[['ISS-ID','Platform','Origin','Surface','Title','Description','Severity','Status','Tester','URL','Logged','Run']];
+  const issueRows=[['ISS-ID','Platform','Environment','Origin','Surface','Title','Description','Severity','Status','Tester','URL','Logged','Run']];
   issues.forEach(i=>{
     const run=runs.find(r=>r.id===i.test_run_id);
-    issueRows.push([`ISS-${String(i.id).padStart(3,'0')}`,i.platform||'Web',i.origin==='ad_hoc'?'Ad hoc':'Test run',i.surface||'',i.title||'',i.description||'',i.severity||'High',i.status||'open',i.tester||'',i.url||'',i.created_at?new Date(i.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'',run?.name||'']);
+    issueRows.push([`ISS-${String(i.id).padStart(3,'0')}`,i.platform||'Web',i.environment||'prod',i.origin==='ad_hoc'?'Ad hoc':'Test run',i.surface||'',i.title||'',i.description||'',i.severity||'High',i.status||'open',i.tester||'',i.url||'',i.created_at?new Date(i.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'',run?.name||'']);
   });
   const toCSV=rows=>rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const combined=['=== TEST CASES ===',toCSV(caseRows),'','=== ALL ISSUES (WEB + MOBILE · TEST RUN + AD HOC) ===',toCSV(issueRows)].join('\n');
@@ -1550,6 +1621,16 @@ function exportCSV(){
 }
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function envBadge(env){
+  if(!env||env==='prod'){
+    return `<span class="badge" style="background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.38);color:var(--green);font-size:8px;letter-spacing:0.8px;padding:2px 6px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-weight:600">PROD</span>`;
+  }
+  if(env==='dev'){
+    return `<span class="badge" style="background:rgba(255,149,0,0.12);border:1px solid rgba(255,149,0,0.38);color:var(--orange);font-size:8px;letter-spacing:0.8px;padding:2px 6px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-weight:600">DEV</span>`;
+  }
+  return `<span class="badge" style="background:rgba(123,92,246,0.12);border:1px solid rgba(123,92,246,0.38);color:var(--purple);font-size:8px;letter-spacing:0.8px;padding:2px 6px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-weight:600">BOTH</span>`;
+}
 
 function showSetupSQL(){
   prompt('Run in Supabase SQL Editor:',`ALTER TABLE qa_test_cases ADD COLUMN IF NOT EXISTS platform TEXT DEFAULT 'Web';
@@ -2644,6 +2725,7 @@ async function submitFixDeployed(caseId){
     }
 
     // 2. Write to history
+    const tcFix = cases.find(c=>c.id===caseId);
     await sb('qa_assignment_history',{method:'POST',body:JSON.stringify({
       case_id: caseId,
       run_id: activeRunId,
@@ -2651,6 +2733,7 @@ async function submitFixDeployed(caseId){
       notes: desc,
       tester: 'Peri',
       assignee: assignee||null,
+      environment: tcFix?.environment || 'prod',
       changed_at: new Date().toISOString()
     })});
 
@@ -2965,9 +3048,11 @@ async function upsertAssignment(caseId,status,tester,notes,issueId){
   else{await sb('qa_assignments',{method:'POST',body:JSON.stringify({run_id:activeRunId,case_id:caseId,status,tester:tester||null,notes:notes||null,issue_id:issueId||null,tested_at:new Date().toISOString()})});}
   // Write history — fail silently if table not yet created
   try{
+    const tcUp = cases.find(c=>c.id===caseId);
     await sb('qa_assignment_history',{method:'POST',body:JSON.stringify({
       case_id:caseId, run_id:activeRunId, status,
       notes:notes||null, tester:tester||null,
+      environment: tcUp?.environment || 'prod',
       changed_at:new Date().toISOString()
     })});
   }catch(e){}
@@ -3023,11 +3108,13 @@ create policy "allow all" on signal_bullet_issues for all using (true) with chec
 
 function renderBulletQA(){
   const list = bulletIssues || [];
+  const eFilter = document.getElementById('bqa-environment-filter')?.value || 'all';
   const tFilter = document.getElementById('bqa-tester-filter')?.value || 'all';
   const sFilter = document.getElementById('bqa-status-filter')?.value || 'all';
   const sevFilter = document.getElementById('bqa-severity-filter')?.value || 'all';
 
   let filtered = list;
+  if(eFilter !== 'all') filtered = filtered.filter(i => i.environment === eFilter);
   if(tFilter !== 'all') filtered = filtered.filter(i => i.tester === tFilter);
   if(sFilter === 'open') filtered = filtered.filter(i => !i.resolved);
   if(sFilter === 'resolved') filtered = filtered.filter(i => i.resolved);
@@ -3063,8 +3150,9 @@ function bqaCard(i){
       <div class="card-main">
         <div class="card-surface" style="color:${sevColor}">${esc(i.company || '—')} · ${esc(i.role || '—')}</div>
         <div class="card-title" style="white-space:normal">${esc((i.concern||'').substring(0,180))}${(i.concern||'').length > 180 ? '…' : ''}</div>
-        <div style="display:flex;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);margin-top:4px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);margin-top:4px;flex-wrap:wrap;align-items:center">
           <span style="color:${testerColor};font-weight:700">${esc(tester)}</span>
+          ${envBadge(i.environment)}
           <span>·</span>
           <span>${esc(i.persona_name || '—')}</span>
           <span>·</span>
@@ -3132,6 +3220,7 @@ function openBulletQAModal(){
   document.getElementById('bqa-concern').value = '';
   document.getElementById('bqa-expected').value = '';
   document.getElementById('bqa-tags').value = '';
+  document.getElementById('bqa-environment').value = 'prod';
   document.getElementById('bqa-extracted').style.display = 'none';
   document.getElementById('bqa-bullets-section').style.display = 'none';
   document.getElementById('bqa-parse-status').textContent = '';
@@ -3246,6 +3335,7 @@ async function saveBulletQA(){
 
   const payload = {
     tester: document.getElementById('bqa-tester').value,
+    environment: document.getElementById('bqa-environment').value,
     network_response: document.getElementById('bqa-network-response').value.trim() || null,
     concern,
     expected: document.getElementById('bqa-expected').value.trim() || null,
