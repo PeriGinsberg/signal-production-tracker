@@ -95,6 +95,7 @@ main{padding:24px;overflow-y:auto;}
   .badge-fix_deployed{background:rgba(191,90,242,0.15);border:1px solid rgba(191,90,242,0.4);color:#BF5AF2;}
   .status-fix_deployed{border-left-color:#BF5AF2!important;}
 .badge-untested{background:var(--bg3);border:1px solid var(--border2);color:var(--muted);}
+.badge-skipped{background:rgba(123,92,246,0.12);border:1px solid rgba(123,92,246,0.32);color:#7B5CF6;}
 .adhoc-badge{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;letter-spacing:0.8px;padding:2px 6px;border-radius:4px;text-transform:uppercase;background:var(--purple-bg);border:1px solid var(--purple-border);color:var(--purple);}
 .run-badge{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;letter-spacing:0.8px;padding:2px 6px;border-radius:4px;text-transform:uppercase;background:var(--teal-bg);border:1px solid var(--teal-border);color:var(--teal);}
 
@@ -124,6 +125,7 @@ main{padding:24px;overflow-y:auto;}
 .act-pass{background:var(--green-bg);border:1px solid var(--green-border)!important;color:var(--green);}
 .act-fail{background:var(--coral-bg);border:1px solid var(--coral-border)!important;color:var(--coral);}
 .act-blocked{background:var(--orange-bg);border:1px solid var(--orange-border)!important;color:var(--orange);}
+.act-skip{background:rgba(123,92,246,0.10);border:1px solid rgba(123,92,246,0.32)!important;color:#7B5CF6;font-weight:700;}
 
 .fail-form{background:rgba(255,79,109,0.04);border-top:1px solid var(--coral-border);padding:14px 16px;display:none;flex-direction:column;gap:8px;}
 .fail-form.open{display:flex;}
@@ -279,10 +281,13 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
 .card.status-blocked{border-left:4px solid var(--orange);}
 .card.status-blocked .card-header{background:rgba(255,149,0,0.04);}
 .card.status-untested{border-left:4px solid rgba(255,255,255,0.12);}
+.card.status-skipped{border-left:4px solid #7B5CF6;}
+.card.status-skipped .card-header{background:rgba(123,92,246,0.04);}
 /* Action buttons with glow on hover */
 .act-pass:hover{background:var(--green)!important;color:#0B0F1A;box-shadow:0 0 12px rgba(48,209,88,0.35);}
 .act-fail:hover{background:var(--coral)!important;color:#fff;box-shadow:0 0 12px rgba(255,59,92,0.35);}
 .act-blocked:hover{background:var(--orange)!important;color:#0B0F1A;box-shadow:0 0 12px rgba(255,149,0,0.35);}
+.act-skip:hover{background:#7B5CF6!important;color:#fff;box-shadow:0 0 12px rgba(123,92,246,0.35);}
 .act-pass,.act-fail,.act-blocked{font-weight:700;}
 .act-clear{background:var(--bg3);border:1px solid var(--border2)!important;color:var(--dim);font-size:11px;}
 .act-clear:hover{background:var(--bg2);color:var(--muted);border-color:var(--border3)!important;}
@@ -294,6 +299,7 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
 .run-filter-btn.active.fail{background:rgba(255,59,92,0.18);border-color:var(--coral);color:var(--coral);box-shadow:0 0 12px rgba(255,59,92,0.3);}
 .run-filter-btn.active.blocked{background:rgba(255,149,0,0.18);border-color:var(--orange);color:var(--orange);box-shadow:0 0 12px rgba(255,149,0,0.3);}
 .run-filter-btn.active.fix_deployed{background:rgba(191,90,242,0.18);border-color:#BF5AF2;color:#BF5AF2;box-shadow:0 0 12px rgba(191,90,242,0.3);}
+.run-filter-btn.active.skipped{background:rgba(123,92,246,0.18);border-color:#7B5CF6;color:#7B5CF6;box-shadow:0 0 12px rgba(123,92,246,0.3);}
 /* Sidebar buttons full fill on hover */
 .btn-orange:hover{background:var(--orange)!important;color:#0B0F1A;box-shadow:0 0 14px rgba(255,149,0,0.35);}
 .btn-teal:hover{background:var(--teal)!important;color:#0B0F1A;box-shadow:0 0 14px rgba(0,245,212,0.35);}
@@ -449,6 +455,9 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
       </button>
       <button class="run-filter-btn fix_deployed" id="rf-fix_deployed" onclick="setRunFilter('fix_deployed',this)">
         🔧 Fix Deployed <span id="rf-count-fix_deployed" style="font-family:'IBM Plex Mono',monospace;font-size:9px;background:var(--bg4);border:1px solid var(--border2);border-radius:3px;padding:1px 4px;margin-left:3px">0</span>
+      </button>
+      <button class="run-filter-btn skipped" id="rf-skipped" onclick="setRunFilter('skipped',this)">
+        ⏭ Skipped <span id="rf-count-skipped" style="font-family:'IBM Plex Mono',monospace;font-size:9px;background:var(--bg4);border:1px solid var(--border2);border-radius:3px;padding:1px 4px;margin-left:3px">0</span>
       </button>
     </div>
   </div>
@@ -1105,6 +1114,7 @@ function caseCard(c){
         <button class="act-btn act-pass" onclick="markCase(${c.id},'pass',event)">✓ PASS</button>
         <button class="act-btn act-fail" onclick="markCase(${c.id},'fail',event)">✗ FAIL</button>
         <button class="act-btn act-blocked" onclick="markCase(${c.id},'blocked',event)">⊘ BLOCKED</button>
+        <button class="act-btn act-skip" onclick="markCase(${c.id},'skipped',event)">⏭ SKIP</button>
         ${status==='fail'?`<button class="act-btn" style="background:rgba(191,90,242,0.15);border-color:rgba(191,90,242,0.4);color:#BF5AF2" onclick="openFixDeployedForm(${c.id},event)">🔧 FIX DEPLOYED</button>`:''}
         ${status!=='untested'?`<button class="act-btn act-clear" onclick="clearCase(${c.id},event)" title="Clear result">✕</button>`:''}
       </div>
@@ -1137,7 +1147,7 @@ function caseCard(c){
       <div id="history-panel-${c.id}"></div>
       <div style="display:flex;gap:6px;margin-top:4px">
         <button onclick="editCase(${c.id})" style="padding:5px 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;color:var(--muted);font-size:11px;cursor:pointer">Edit</button>
-        <button onclick="deleteCase(${c.id})" style="padding:5px 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;color:var(--muted);font-size:11px;cursor:pointer">Delete</button>
+        <button onclick="deleteCase(${c.id})" style="padding:5px 10px;background:var(--coral-bg);border:1px solid var(--coral-border);border-radius:5px;color:var(--coral);font-size:11px;cursor:pointer;font-weight:600">Delete from library</button>
       </div>
     </div>
   </div>`;
@@ -1399,8 +1409,9 @@ function updateRunStatusBar(){
   const fail=ra.filter(a=>a.status==='fail').length;
   const blocked=ra.filter(a=>a.status==='blocked').length;
   const fixDeployed=ra.filter(a=>a.status==='fix_deployed').length;
+  const skipped=ra.filter(a=>a.status==='skipped').length;
   const untested=ra.filter(a=>a.status==='untested').length;
-  const done=pass+fail+blocked+fixDeployed;
+  const done=pass+fail+blocked+fixDeployed+skipped;
   const pct=total?Math.round(done/total*100):0;
 
   document.getElementById('run-status-name').textContent=run?.name||'Active Run';
@@ -1414,6 +1425,8 @@ function updateRunStatusBar(){
   document.getElementById('rf-count-blocked').textContent=blocked;
   const fdEl=document.getElementById('rf-count-fix_deployed');
   if(fdEl) fdEl.textContent=fixDeployed;
+  const skEl=document.getElementById('rf-count-skipped');
+  if(skEl) skEl.textContent=skipped;
 
   // Color the fail count red if any failures
   const failBtn=document.getElementById('rf-fail');
@@ -1422,6 +1435,10 @@ function updateRunStatusBar(){
   // Color fix_deployed purple if any
   const fdBtn=document.getElementById('rf-fix_deployed');
   if(fdBtn) fdBtn.style.color=fixDeployed>0?'#BF5AF2':'';
+
+  // Color skipped purple if any
+  const skBtn=document.getElementById('rf-skipped');
+  if(skBtn) skBtn.style.color=skipped>0?'#7B5CF6':'';
 
   bar.style.display='block';
   
@@ -1543,7 +1560,14 @@ function editCase(id){
   document.getElementById('case-modal').classList.add('open');
 }
 
-async function deleteCase(id){if(!confirm('Delete?'))return;await sb(`qa_test_cases?id=eq.${id}`,{method:'DELETE'});await loadAll();}
+async function deleteCase(id){
+  const tc=cases.find(c=>c.id===id);
+  if(!tc)return;
+  const msg=`Delete this test case from the library?\n\nTC-${String(id).padStart(3,'0')}: ${tc.title}\n\nThis removes the case from all runs and assignments. This cannot be undone.`;
+  if(!confirm(msg))return;
+  await sb(`qa_test_cases?id=eq.${id}`,{method:'DELETE'});
+  await loadAll();
+}
 
 async function saveRun(){
   const name=document.getElementById('r-name').value.trim();
