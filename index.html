@@ -730,6 +730,14 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
     </div>
   </div>
   <div class="form-group">
+    <label class="form-label">Add by TC Number</label>
+    <textarea id="r-tc-input" placeholder="TC-584, TC-585, 586&#10;Or one per line. With or without TC- prefix." style="min-height:60px;font-family:'IBM Plex Mono',monospace;font-size:12px"></textarea>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+      <button onclick="addByTcNumbers()" style="padding:5px 12px;background:var(--orange-bg);border:1px solid var(--orange-border);border-radius:6px;color:var(--orange);font-size:11px;font-weight:600;cursor:pointer;font-family:'IBM Plex Mono',monospace;letter-spacing:0.5px">+ ADD</button>
+      <div id="r-tc-status" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim)"></div>
+    </div>
+  </div>
+  <div class="form-group">
     <label class="form-label">Quick Select Cases</label>
     <div style="display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap">
       <button onclick="populateRunCaseList('Critical')" style="padding:4px 8px;background:var(--coral-bg);border:1px solid var(--coral-border);border-radius:5px;color:var(--coral);font-size:10px;cursor:pointer;font-family:'IBM Plex Mono',monospace">Critical only</button>
@@ -1480,8 +1488,64 @@ function openRunModal(){
   document.getElementById('r-testers').value='';
   document.getElementById('r-platform').value='all';
   document.getElementById('r-environment').value='prod';
+  document.getElementById('r-tc-input').value='';
+  const st=document.getElementById('r-tc-status');
+  st.textContent='';st.style.color='var(--dim)';
   populateRunCaseList();
   document.getElementById('run-modal').classList.add('open');
+}
+
+// Parse free-form TC-number input. Accepts comma- and/or newline-separated
+// tokens, with or without a "TC-" prefix, whitespace-tolerant. Returns a
+// deduped array of numeric IDs. Invalid tokens are silently skipped here;
+// addByTcNumbers() does the resolved-vs-unresolved reporting against the
+// loaded `cases` array.
+function parseTcInput(text){
+  const tokens=String(text||'').split(/[,\n]/).map(t=>t.trim()).filter(Boolean);
+  const ids=[];
+  for(const t of tokens){
+    const m=t.match(/^(?:TC[-_\s]*)?(\d+)$/i);
+    if(m) ids.push(parseInt(m[1],10));
+  }
+  return [...new Set(ids)];
+}
+
+function addByTcNumbers(){
+  const text=document.getElementById('r-tc-input').value;
+  const status=document.getElementById('r-tc-status');
+  const ids=parseTcInput(text);
+  if(!ids.length){
+    status.textContent='No TC numbers found in input.';
+    status.style.color='var(--coral)';
+    return;
+  }
+  const found=[],notFound=[];
+  for(const id of ids){
+    if(cases.find(c=>c.id===id)) found.push(id);
+    else notFound.push(id);
+  }
+  // If any resolved TC falls outside the current platform filter, widen to
+  // 'all' and re-render so every checkbox is in the DOM to be ticked.
+  const platform=document.getElementById('r-platform').value;
+  const needsWiden=platform!=='all'&&found.some(id=>{
+    const c=cases.find(cc=>cc.id===id);
+    return c&&c.platform!==platform;
+  });
+  if(needsWiden){
+    document.getElementById('r-platform').value='all';
+    populateRunCaseList();
+  }
+  // Tick the resolved checkboxes (additive — leaves existing selections alone).
+  for(const id of found){
+    const cb=document.querySelector(`input[name="rc"][value="${id}"]`);
+    if(cb) cb.checked=true;
+  }
+  // Report. Show partial counts + which numbers didn't resolve.
+  const fmt=n=>'TC-'+String(n).padStart(3,'0');
+  let msg=`Added ${found.length} of ${ids.length}`;
+  if(notFound.length) msg+=` — not found: ${notFound.map(fmt).join(', ')}`;
+  status.textContent=msg;
+  status.style.color=notFound.length?'var(--coral)':'var(--green)';
 }
 
 function populateRunCaseList(typeFilter){
