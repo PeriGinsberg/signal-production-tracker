@@ -1482,6 +1482,12 @@ function openCaseModal(){
   document.getElementById('case-modal').classList.add('open');
 }
 
+// Modal-scoped set of TC IDs added via the "Add by TC Number" input.
+// saveRun() unions this with the checked checkboxes so the paste-TC
+// pathway works as a complete alternative — no list interaction required.
+// Cleared on each openRunModal() call.
+let runModalAddedTcIds = new Set();
+
 function openRunModal(){
   document.getElementById('r-name').value='';
   document.getElementById('r-creator').value='';
@@ -1491,6 +1497,7 @@ function openRunModal(){
   document.getElementById('r-tc-input').value='';
   const st=document.getElementById('r-tc-status');
   st.textContent='';st.style.color='var(--dim)';
+  runModalAddedTcIds = new Set();
   populateRunCaseList();
   document.getElementById('run-modal').classList.add('open');
 }
@@ -1524,25 +1531,19 @@ function addByTcNumbers(){
     if(cases.find(c=>c.id===id)) found.push(id);
     else notFound.push(id);
   }
-  // If any resolved TC falls outside the current platform filter, widen to
-  // 'all' and re-render so every checkbox is in the DOM to be ticked.
-  const platform=document.getElementById('r-platform').value;
-  const needsWiden=platform!=='all'&&found.some(id=>{
-    const c=cases.find(cc=>cc.id===id);
-    return c&&c.platform!==platform;
-  });
-  if(needsWiden){
-    document.getElementById('r-platform').value='all';
-    populateRunCaseList();
-  }
-  // Tick the resolved checkboxes (additive — leaves existing selections alone).
+  // Canonical store: add to the modal-scoped Set. saveRun() unions this
+  // with the checkbox selection so the paste-TC pathway works regardless
+  // of platform filter or whether the boxes are visible.
+  for(const id of found) runModalAddedTcIds.add(id);
+  // Visual feedback only: tick the checkbox if it happens to be in the
+  // DOM (current platform filter includes it). No-op otherwise — the Set
+  // above is the source of truth on save.
   for(const id of found){
     const cb=document.querySelector(`input[name="rc"][value="${id}"]`);
     if(cb) cb.checked=true;
   }
-  // Report. Show partial counts + which numbers didn't resolve.
   const fmt=n=>'TC-'+String(n).padStart(3,'0');
-  let msg=`Added ${found.length} of ${ids.length}`;
+  let msg=`Added ${found.length} of ${ids.length} (${runModalAddedTcIds.size} total via TC #)`;
   if(notFound.length) msg+=` — not found: ${notFound.map(fmt).join(', ')}`;
   status.textContent=msg;
   status.style.color=notFound.length?'var(--coral)':'var(--green)';
@@ -1636,7 +1637,11 @@ async function deleteCase(id){
 async function saveRun(){
   const name=document.getElementById('r-name').value.trim();
   if(!name){alert('Run name required.');return;}
-  const selectedCases=[...document.querySelectorAll('input[name="rc"]:checked')].map(cb=>parseInt(cb.value));
+  // Union: checkbox selections ∪ IDs added via the "Add by TC Number"
+  // input. Either pathway is sufficient input for a valid run; the user
+  // does not have to interact with the checklist if they pasted TC #s.
+  const checked=[...document.querySelectorAll('input[name="rc"]:checked')].map(cb=>parseInt(cb.value));
+  const selectedCases=[...new Set([...checked, ...runModalAddedTcIds])];
   if(!selectedCases.length){alert('Select at least one case.');return;}
   try{
     const runData=await sb('qa_test_runs',{method:'POST',body:JSON.stringify({
