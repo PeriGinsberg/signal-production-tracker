@@ -753,6 +753,33 @@ header{background:linear-gradient(90deg,#0B0F1A,#131929);border-bottom:1px solid
 </div>
 </div>
 
+<div class="modal-overlay" id="add-cases-modal" onclick="handleMC(event,'add-cases-modal')">
+<div class="modal">
+  <div class="modal-title" id="ac-title">ADD CASES TO RUN</div>
+  <div class="form-group">
+    <label class="form-label">Add by TC Number</label>
+    <textarea id="ac-tc-input" placeholder="TC-584, TC-585, 586&#10;Or one per line. With or without TC- prefix." style="min-height:60px;font-family:'IBM Plex Mono',monospace;font-size:12px"></textarea>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+      <button onclick="addByTcNumbersForAdd()" style="padding:5px 12px;background:var(--orange-bg);border:1px solid var(--orange-border);border-radius:6px;color:var(--orange);font-size:11px;font-weight:600;cursor:pointer;font-family:'IBM Plex Mono',monospace;letter-spacing:0.5px">+ ADD</button>
+      <div id="ac-tc-status" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim)"></div>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Or Pick from Library (cases already in this run are hidden)</label>
+    <div style="display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap">
+      <button onclick="populateAddCasesList('Critical')" style="padding:4px 8px;background:var(--coral-bg);border:1px solid var(--coral-border);border-radius:5px;color:var(--coral);font-size:10px;cursor:pointer;font-family:'IBM Plex Mono',monospace">Critical only</button>
+      <button onclick="populateAddCasesList('UI')" style="padding:4px 8px;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;color:var(--muted);font-size:10px;cursor:pointer;font-family:'IBM Plex Mono',monospace">UI only</button>
+      <button onclick="selectAllAddCases(false)" style="padding:4px 8px;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;color:var(--muted);font-size:10px;cursor:pointer;font-family:'IBM Plex Mono',monospace">Clear</button>
+    </div>
+    <div class="case-checklist" id="ac-case-list"></div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn-cancel" onclick="closeModal('add-cases-modal')">Cancel</button>
+    <button class="btn-save" onclick="saveAddCases()">+ ADD CASES</button>
+  </div>
+</div>
+</div>
+
 <!-- BULLET QA MODAL -->
 <div class="modal-overlay" id="bqa-modal" onclick="handleMC(event,'bqa-modal')">
 <div class="modal" style="max-width:780px">
@@ -1250,6 +1277,7 @@ function renderRuns(){
       </div>
       <div class="run-actions">
         <button class="run-btn run-btn-primary" onclick="setActiveRun('${run.id}');showTab('library')">Open in Test View</button>
+        <button class="run-btn run-btn-secondary" onclick="openAddCasesModal(${run.id})">+ Add Cases</button>
         <button class="run-btn run-btn-secondary" onclick="markRunComplete(${run.id})">Mark Complete</button>
         <button class="run-btn run-btn-secondary" onclick="deleteRun(${run.id})">Delete</button>
       </div>
@@ -1655,6 +1683,120 @@ async function saveRun(){
     await Promise.all(selectedCases.map(caseId=>sb('qa_assignments',{method:'POST',body:JSON.stringify({run_id:runId,case_id:caseId,status:'untested'})})));
     closeModal('run-modal');activeRunId=runId;
     await loadAll();showTab('library');
+  }catch(e){alert('Failed: '+e.message);}
+}
+
+// ── Add-cases-to-existing-run modal ─────────────────────────
+// Mirrors the create-run flow but scoped to a target run. The user adds
+// cases via TC-number paste and/or by ticking boxes; saveAddCases()
+// inserts new qa_assignments rows for the run and bumps case_count.
+let addCasesModalRunId = null;
+let addCasesModalAddedTcIds = new Set();
+
+function openAddCasesModal(runId){
+  const run = runs.find(r=>r.id===runId);
+  if(!run){alert('Run not found.');return;}
+  addCasesModalRunId = runId;
+  addCasesModalAddedTcIds = new Set();
+  document.getElementById('ac-title').textContent = `ADD CASES TO: ${run.name.toUpperCase()}`;
+  document.getElementById('ac-tc-input').value = '';
+  const st = document.getElementById('ac-tc-status');
+  st.textContent = '';st.style.color = 'var(--dim)';
+  populateAddCasesList();
+  document.getElementById('add-cases-modal').classList.add('open');
+}
+
+function populateAddCasesList(typeFilter){
+  const runId = addCasesModalRunId;
+  const inRun = new Set(assignments.filter(a=>a.run_id===runId).map(a=>a.case_id));
+  const list = document.getElementById('ac-case-list');
+  // Show only cases NOT already in the run. Less clutter, no risk of
+  // duplicate adds. Default state is UNCHECKED — the user explicitly
+  // picks what to add (unlike create-run, which pre-checks everything).
+  const visible = cases.filter(c => !inRun.has(c.id));
+  if(!visible.length){
+    list.innerHTML = `<div style="padding:20px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim)">EVERY CASE IN THE LIBRARY IS ALREADY IN THIS RUN</div>`;
+    return;
+  }
+  list.innerHTML = visible.map(c => {
+    const color = SURF_COLORS[c.surface] || '#fff';
+    const isMobile = c.platform === 'Mobile';
+    // Quick-select buttons (Critical / UI) pre-check matching rows on
+    // re-render. Default (no typeFilter) leaves every box unchecked.
+    const shouldCheck = typeFilter && (typeFilter==='Critical' ? c.priority==='Critical' : c.test_type===typeFilter);
+    // If a TC was added via paste this session, keep its box ticked
+    // through re-renders.
+    const tickedFromPaste = addCasesModalAddedTcIds.has(c.id);
+    return `<label class="case-check-item">
+      <input type="checkbox" name="ac" value="${c.id}" ${shouldCheck||tickedFromPaste?'checked':''}>
+      <span class="plat-badge ${isMobile?'plat-mobile':'plat-web'}" style="margin-right:2px">${isMobile?'iOS':'WEB'}</span>
+      <span style="font-size:9px;font-weight:700;text-transform:uppercase;color:${color};width:90px;flex-shrink:0">${esc(c.surface.replace('Mobile — ',''))}</span>
+      <span style="font-size:12px;color:var(--text);flex:1">${esc(c.title)}</span>
+      <span class="badge badge-${(c.priority||'High').toLowerCase()}" style="font-size:8px">${c.priority}</span>
+    </label>`;
+  }).join('');
+}
+
+function selectAllAddCases(checked){
+  document.querySelectorAll('input[name="ac"]').forEach(cb=>cb.checked=checked);
+}
+
+function addByTcNumbersForAdd(){
+  const text = document.getElementById('ac-tc-input').value;
+  const status = document.getElementById('ac-tc-status');
+  const ids = parseTcInput(text);
+  if(!ids.length){
+    status.textContent = 'No TC numbers found in input.';
+    status.style.color = 'var(--coral)';
+    return;
+  }
+  const inRun = new Set(assignments.filter(a=>a.run_id===addCasesModalRunId).map(a=>a.case_id));
+  const added=[], notFound=[], alreadyInRun=[];
+  for(const id of ids){
+    if(!cases.find(c=>c.id===id)) notFound.push(id);
+    else if(inRun.has(id)) alreadyInRun.push(id);
+    else if(addCasesModalAddedTcIds.has(id)) added.push(id); // already added this session, no-op
+    else { addCasesModalAddedTcIds.add(id); added.push(id); }
+  }
+  // Tick visible checkboxes. No-op for cases hidden by inRun filter.
+  for(const id of added){
+    const cb = document.querySelector(`input[name="ac"][value="${id}"]`);
+    if(cb) cb.checked = true;
+  }
+  const fmt = n => 'TC-'+String(n).padStart(3,'0');
+  let msg = `Added ${added.length} of ${ids.length} (${addCasesModalAddedTcIds.size} total via TC #)`;
+  const notes = [];
+  if(alreadyInRun.length) notes.push(`${alreadyInRun.length} already in run`);
+  if(notFound.length) notes.push(`not found: ${notFound.map(fmt).join(', ')}`);
+  if(notes.length) msg += ' — ' + notes.join('; ');
+  status.textContent = msg;
+  status.style.color = (notFound.length || alreadyInRun.length) ? 'var(--coral)' : 'var(--green)';
+}
+
+async function saveAddCases(){
+  const runId = addCasesModalRunId;
+  if(!runId){alert('No target run selected.');return;}
+  const checked = [...document.querySelectorAll('input[name="ac"]:checked')].map(cb=>parseInt(cb.value));
+  // Union with TC-paste Set. saveRun() pattern.
+  const candidateIds = [...new Set([...checked, ...addCasesModalAddedTcIds])];
+  if(!candidateIds.length){alert('Select at least one case to add.');return;}
+  // Defense: drop any case_ids already in the run (could happen if the
+  // user pasted TCs that overlap with existing assignments and somehow
+  // bypassed the in-modal dedupe). Server-side this would just create
+  // duplicate rows — we want clean inserts only.
+  const inRun = new Set(assignments.filter(a=>a.run_id===runId).map(a=>a.case_id));
+  const newCaseIds = candidateIds.filter(id => !inRun.has(id));
+  if(!newCaseIds.length){alert('All selected cases are already in this run.');return;}
+  try{
+    await Promise.all(newCaseIds.map(caseId =>
+      sb('qa_assignments', {method:'POST', body:JSON.stringify({run_id:runId, case_id:caseId, status:'untested'})})
+    ));
+    // Keep case_count consistent with assignments.length. Mirrors what
+    // saveRun() stores at create-time.
+    const newTotal = inRun.size + newCaseIds.length;
+    await sb(`qa_test_runs?id=eq.${runId}`, {method:'PATCH', body:JSON.stringify({case_count:newTotal})});
+    closeModal('add-cases-modal');
+    await loadAll();
   }catch(e){alert('Failed: '+e.message);}
 }
 
